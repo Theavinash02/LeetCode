@@ -24,4 +24,4 @@ class Solution:
                 s = lis.pop()
                 result = int(s) / int(f)
                 lis.append(result)
-        return lis[0]
+        return int(lis[0])
