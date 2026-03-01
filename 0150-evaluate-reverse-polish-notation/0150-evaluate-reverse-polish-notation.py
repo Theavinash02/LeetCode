@@ -3,25 +3,25 @@ class Solution:
         lis = []
         for i in tokens:
             if i not in ("+", "-", "*", "/"): 
-                lis.append(i)
+                lis.append(int(i))
             elif i == "+":
                 f= lis.pop()
                 s = lis.pop()
-                result = int(s) + int(f)
+                result = s + f
                 lis.append(result)
             elif i == "-":
                 f= lis.pop()
                 s = lis.pop()
-                result = int(s) - int(f)
+                result = s - f
                 lis.append(result)
             elif i == "*":
                 f= lis.pop()
                 s = lis.pop()
-                result = int(s) * int(f)
+                result = s * f
                 lis.append(result)
             elif i == "/":
                 f= lis.pop()
                 s = lis.pop()
-                result = int(s) / int(f)
+                result = int(s / f)
                 lis.append(result)
-        return int(lis[0])
+        return lis[0]
