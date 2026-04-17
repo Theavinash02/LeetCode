@@ -4,9 +4,6 @@ def linearsearch(arr,target):
             return i
     return -1
 
-
-
-
 if __name__ == "__main__": # blocks the excuction of the code when the file is imported as a module in another file.
     arr = [1,2,3,4,5]
     target = 3
