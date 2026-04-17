@@ -1,0 +1,5 @@
+Input and output is done.
+
+print()
+input()
+https://www.geeksforgeeks.org/dsa/input-and-output-in-programming/#4-python
