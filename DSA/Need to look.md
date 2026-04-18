@@ -1,1046 +1,752 @@
-# TCS Prime Interview Cram Pack — Avinash P
-**Interview: Monday, 20 April 2026 | Chennai**
+# TCS Prime — Project & PR Deep Dive (v2, code-accurate)
+**Companion to the main cram pack. Focus: your actual projects + pgmpy math.**
+
+> **This is version 2, updated after you shared the actual PR code, file tree, and PR discussions. All PR descriptions now match what the code really does. The inaccurate "before my work" framing from v1 has been removed — the correct story is the three-act one: you built the first registry in #2347, refactored your own design in #2515 after maintainer discussion, and extended the pattern to models in #2571.**
 
 ---
 
-## How to use this pack
+## Part 0 — Study strategy verdict
 
-This is dense. Don't passively read. For each section:
+### STOP reading GeeksforGeeks DSA tutorials straight through.
 
-1. Read the **Concepts** block once.
-2. Cover the screen and **explain it out loud** as if I'm interviewing you.
-3. Type out the **Code you must be able to write** on a blank editor — no copy-paste.
-4. Read the **Interview Q&A** and rehearse answers in your own words.
-5. Check the **Your Resume Angle** to know how to pivot back to your projects.
+Reading algorithm theory without coding it = **wasted hours**. You will not remember 80% of it by Monday morning, and you can't explain what you haven't written. Finishing the sorting chapter doesn't help if you can't write quicksort's partition function on paper when asked.
 
-If you can't explain something out loud, you don't know it yet.
+### The correct 3-source hybrid
 
----
+| Source | Purpose |
+|---|---|
+| **Roadmap PDF** | Breadth checklist — OOP, OS, CN, DBMS topics TCS asks |
+| **Main cram pack** | Depth on resume-critical topics (Prob/Stats, LoRA, Pandas, advanced SQL) |
+| **This doc** | Your PRs + pgmpy math + Bitcoin project rehearsal |
+| **GeeksforGeeks** | DROP. Only if stuck on a specific problem. |
+| **Coding practice** | 1 problem solved per pattern on paper > 10 read tutorials |
 
-## 36-Hour Study Schedule
+### Six DSA problems on paper (2-3 hrs)
 
-### Saturday (Today) — ~8 hours of focused study
-| Time | Block | What |
-|------|-------|------|
-| Now — 2hr | **Probability & Statistics** | Highest risk. You claim pgmpy contributor. |
-| +1hr break | Walk, food | |
-| 2hr | **NumPy + Pandas** | Tie to Bitcoin project. |
-| 1hr | **DSA Patterns — Part 1** | 2 problems: two-pointer + hash map. |
-| Dinner | | |
-| 2hr | **Transformers + Hugging Face** | Connect to LoRA/Phi-3 project. |
-| 30min | Resume rehearsal | Read your own resume out loud. |
-| **Sleep by 11pm.** | | |
+1. Two-pointer — "Two sum on sorted array"
+2. Sliding window — "Longest substring without repeating chars"
+3. Hash map — "Subarray sum equals K"
+4. Binary search — "Search in rotated sorted array"
+5. BFS/DFS — "Number of islands"
+6. DP — "Coin change"
 
-### Sunday — ~8 hours of focused study
-| Time | Block | What |
-|------|-------|------|
-| Morning 2hr | **SQL/RDBMS Deep Dive** | Execution plans, isolation, indexes. |
-| 1hr | **DSA Patterns — Part 2** | Binary search + BFS/DFS. |
-| 1hr | **Linear Algebra** | Fast pass. |
-| Lunch | | |
-| 2hr | **pgmpy + your PRs** | Re-read PRs 2347, 2515, 2571. Explain out loud. |
-| 1hr | **Mock rapid-fire drill** | Ask Claude to grill you. |
-| 1hr | STAR stories | skbase refactor, Fern bug, Go-Live, LoRA. |
-| Evening | Logistics | Print 3 resumes. Plan commute. Iron clothes. |
-| **Sleep by 10:30pm. No studying after dinner Sunday.** | | |
+### Updated schedule
 
-### Monday — Interview day
-- Wake 2.5 hrs before interview. Light breakfast.
-- Re-read this pack's **Interview Q&A sections only** (30 min).
-- Leave 90 min early for Chennai traffic.
-- Carry: 3 resumes, pen, ID, water.
+**Today remaining:**
+- 2 hrs — this doc (PR walkthroughs + pgmpy math). Read + explain out loud.
+- 2 hrs — Prob/Stats + LoRA sections from main cram pack
+- 1.5 hrs — 3 DSA problems on paper
+- Sleep by 11.
+
+**Tomorrow:**
+- 2 hrs — Roadmap topics (OOP 4 pillars, OS basics, CN OSI + TCP, DBMS normalization + ACID)
+- 1.5 hrs — 3 more DSA problems
+- 1.5 hrs — Mock drill + STAR rehearsal
+- 1 hr — Advanced SQL
+- No studying after 8pm Sunday.
 
 ---
 
-# 1. NUMPY
+# Part 1 — Your pgmpy PRs, taught from the actual code
 
-## Concepts
+## 1.0 — Essential pgmpy context
 
-NumPy provides the **`ndarray`** — an n-dimensional array stored as a contiguous block of memory with a single fixed dtype. This is why it's fast: no Python object overhead, operations run in compiled C, and CPU-level SIMD can vectorize them.
+pgmpy is a Python library for **causal and probabilistic reasoning with graphical models.** It implements:
 
-**Four things you must own:**
+- **Bayesian Networks** (DAG + CPDs encoding a joint distribution)
+- **Markov Networks**, **Dynamic Bayesian Networks**, **Structural Equation Models**
+- **Causal discovery** (PC, FCI)
+- **Parameter learning** (MLE, Bayesian, EM)
+- **Inference** (Variable Elimination, Belief Propagation, sampling)
+- **Simulation**
 
-**Shape & dtype.** Every array has `.shape` (tuple of dimensions) and `.dtype` (e.g., `float64`, `int32`). Mismatched dtypes cause silent upcasts (`int + float → float`).
+It ships with example models (`asia`, `alarm`, `sachs`, `cancer`, `earthquake`, `arth150`, `ecoli70`) and example datasets for benchmarking causal discovery. These live in companion HuggingFace repos: `pgmpy/example_models` and `pgmpy/example_datasets`.
 
-**Axis.** For a 2D array, `axis=0` moves down rows (collapses vertically across rows), `axis=1` moves across columns. Remember: **axis is the one being eliminated** by the operation. `arr.sum(axis=0)` on a `(3,4)` array gives a `(4,)` result.
+**What is `skbase`?** A meta-framework extracted from `sktime`. Provides:
+- `BaseObject` — base class with parameter management, tag system, sklearn compatibility
+- `skbase.lookup.all_objects` — reflection-based function that walks a package's modules and returns classes inheriting from a given base, with optional tag filtering
 
-**Broadcasting.** When shapes don't match, NumPy aligns them from the right and stretches dimensions of size 1. Rule: two dimensions are compatible if equal OR one of them is 1. Example: `(3,4) + (4,)` works — the `(4,)` is broadcast across each row. `(3,4) + (3,)` does NOT work — align from right, 4 ≠ 3.
+pgmpy adopted skbase to align with the broader scientific Python ecosystem.
 
-**Views vs copies.** Basic slicing returns a **view** (shares memory). Fancy indexing (boolean or integer arrays) returns a **copy**. Modifying a view modifies the original. When in doubt, `.copy()`.
+---
 
-## Code you must be able to write
+## 1.1 — The honest three-act story (your main narrative)
+
+Your three PRs form a clean evolution. **Tell it in this order. Do not say "before my work" for anything — you built the whole system.**
+
+**Act 1 — PR #2347 (Sept–Dec 2025):** You built the **first** unified dataset loading system for pgmpy. It used a custom `DATASET_REGISTRY` plus a `register_dataset_class` function that contributors called to register a dataset.
+
+**Act 2 — PR #2515 (Dec 2025–Jan 2026):** After design discussions in issues **#2506 and #2512**, you **refactored your own earlier registry** into skbase-based auto-discovery. `_BaseDataset` now inherits from `skbase.base.BaseObject`; `skbase.lookup.all_objects` discovers classes via introspection; tags became a class-level `_tags` dict.
+
+**Act 3 — PR #2571:** You **extended the same pattern to example models**, seeded three example model classes (one per format: DAG via dagitty, continuous via JSON→LinearGaussianBN, discrete via BIF.gz), and other contributors have since added more models on top of your infrastructure.
+
+This three-act framing is powerful because it shows:
+- **Shipping** (Act 1)
+- **Iterating on your own design without ego** (Act 2)
+- **Building scaffolding that unblocks others** (Act 3)
+
+---
+
+## 1.2 — PR #2347: "Dataset loader" (your first pgmpy PR)
+
+**Branch:** `Theavinash02:get_example_dataset`
+**Merged:** Dec 15, 2025 by @ankurankan (43 commits, +791/-4 lines)
+**Scope:** 12 files across `pgmpy/datasets/`, `extension_templates/`, tests, CI
+
+### What it was
+
+The **first implementation** of a unified dataset API for pgmpy. Before this PR, there was no standardized way to list or load example datasets programmatically. You built:
+
+- `_BaseDataset` — abstract base class with a contract every dataset implements
+- `DATASET_REGISTRY` — dict mapping dataset names to their classes
+- `register_dataset_class(cls)` — the function contributors called to register a dataset
+- `load_dataset(name)` — public API that looks up the class in `DATASET_REGISTRY`
+- Initial dataset classes (`_abalone.py`, `_adult.py`, `_airfoil.py`, `_algeria.py`, `_sachs.py`) — files underscore-prefixed
+- `extension_templates/_dataset.py` — a template for future contributors
+- pytest tests validating the loading workflow
+- CI updates (`lint.yml` Python 3.11 → 3.12, `pyproject.toml` adding an `[all]` extras group)
+
+### How contributors used it
+
+1. Create `_mydataset.py` in `pgmpy/datasets/`
+2. Subclass `_BaseDataset`, set metadata
+3. Call `register_dataset_class(MyDataset)` — the manual step
+4. `load_dataset("mydataset")` looks up the name and returns the dataset
+
+### Why this is a real contribution
+
+- Introduced an API pattern that didn't exist before (inspired by sklearn's `load_iris`)
+- Set up HuggingFace Hub as dataset backend (`repo_id = "pgmpy/example_datasets"`)
+- Seeded 5 concrete dataset implementations
+- Shipped CI and extension templates for future contributors
+
+### Math content: **zero.**
+Pure software engineering — class design, file I/O, registry pattern, module organization.
+
+### Likely follow-up: "Why 43 commits?"
+Normal for a new subsystem PR — reviewer feedback, integration, CI, test iteration, style fixes. Open source iterates publicly.
+
+---
+
+## 1.3 — PR #2515: skbase refactor (your strongest engineering story)
+
+**Branch:** `Theavinash02:Refactor-BaseDataset-to-scikit-base-BaseObject`
+**Merged:** Jan 16, 2026 by @ankurankan (5 of your commits + 4 maintainer follow-ups, +794/-462 lines)
+**Closes:** issues #2506 and #2512
+**Reviewers:** @fkiraly (skbase maintainer) approved; @ankurankan merged
+
+### What it was
+
+You **refactored your own earlier `DATASET_REGISTRY`** from PR #2347 into skbase-based auto-discovery. This is the PR that shows real engineering judgment — accepting a better abstraction over your own prior design after maintainer discussion.
+
+### The before/after (be precise)
+
+**Before (your own PR #2347):** Contributors called `register_dataset_class(MyDataset)`. Forgetting the call was a silent failure. Adding a dataset touched multiple files.
+
+**After (PR #2515):**
+- `_BaseDataset(BaseObject)` — inherits from `skbase.base.BaseObject`
+- Each dataset class declares metadata via a `_tags` class attribute
+- `list_datasets(**filter_tags)` — implemented via `skbase.lookup.all_objects`; walks `pgmpy.datasets`, imports modules, finds subclasses, filters by tag
+- `load_dataset(name)` — uses `all_objects` to find the class by its `name` tag
+- Dataset files **renamed from `_abalone.py` to `abalone.py`** — skbase's scanner ignores underscore-prefixed (private) modules
+- Extension template moved to new location
+- Tests updated for the new workflow
+
+### The actual `_tags` dict from your code
 
 ```python
-import numpy as np
-
-# Creation
-a = np.array([[1, 2, 3], [4, 5, 6]])      # shape (2, 3)
-z = np.zeros((3, 4))                       # 3x4 zeros
-o = np.ones((2, 2))
-r = np.arange(0, 10, 2)                    # [0, 2, 4, 6, 8]
-lin = np.linspace(0, 1, 5)                 # 5 points between 0 and 1
-rand = np.random.randn(3, 3)               # standard normal
-
-# Shape manipulation
-a.reshape(3, 2)
-a.T                                         # transpose
-a.flatten()                                 # to 1D
-
-# Math — all vectorized
-a + 10
-a * 2
-np.exp(a)
-np.log(a + 1)
-
-# Aggregations with axis
-a.sum()              # scalar: sum of all
-a.sum(axis=0)        # shape (3,): column sums
-a.sum(axis=1)        # shape (2,): row sums
-a.mean(axis=1)
-
-# Matrix operations
-A = np.array([[1, 2], [3, 4]])
-B = np.array([[5, 6], [7, 8]])
-A @ B                                       # matrix multiplication
-np.dot(A, B)                                # same thing
-np.linalg.inv(A)                            # inverse
-np.linalg.eig(A)                            # eigenvalues, eigenvectors
-
-# Boolean indexing
-arr = np.array([1, 2, 3, 4, 5])
-arr[arr > 2]                                # [3, 4, 5]
-
-# Broadcasting example
-matrix = np.ones((3, 4))
-row_vec = np.array([1, 2, 3, 4])
-matrix + row_vec                            # row_vec broadcast across 3 rows
+_tags = {
+    "name": None,
+    "n_variables": None,
+    "n_samples": None,
+    "has_ground_truth": False,
+    "has_expert_knowledge": False,
+    "has_missing_data": False,
+    "has_index_col": False,
+    "is_simulated": False,
+    "is_interventional": False,
+    "is_discrete": False,
+    "is_continuous": False,
+    "is_mixed": False,
+    "is_ordinal": False,
+}
 ```
 
-## Interview Q&A
+Every concrete dataset overrides these. `AbaloneContinuous` sets `is_continuous=True`; `Adult` sets `is_mixed=True` with ordinal variables for education and income; `sachs_discrete` sets `is_discrete=True, has_ground_truth=True`.
 
-**Q: Why is NumPy faster than Python lists?**
-Contiguous memory layout with fixed dtype means no per-element object overhead. Operations run in compiled C with SIMD vectorization, so a million-element addition is one C loop, not a million Python interpreter steps.
-
-**Q: Explain broadcasting.**
-A mechanism to apply element-wise ops on arrays of different shapes without making copies. NumPy aligns shapes from the right; dimensions are compatible if they're equal or one is 1. The size-1 dimension is stretched conceptually. Example: adding a bias vector of shape `(4,)` to a batch of shape `(32, 4)` works — the vector is applied to every row.
-
-**Q: What's the difference between `arr.sum()` and `arr.sum(axis=0)`?**
-`arr.sum()` returns a scalar — sum of all elements. `arr.sum(axis=0)` collapses along axis 0 (rows), returning an array where each element is the sum of a column.
-
-**Q: View vs copy?**
-Basic slicing like `arr[1:3]` returns a view that shares memory with the original — modifying it changes the original. Fancy indexing (boolean masks, integer arrays) returns a new copy. Use `.copy()` when you need independence.
-
-**Q: How do you check if two arrays are equal?**
-`np.array_equal(a, b)` for exact equality. `np.allclose(a, b)` for floating-point comparison with tolerance — always use this for floats.
-
-## Your resume angle
-"I used NumPy in the Bitcoin ransomware project for vectorized feature computation over transaction graph features — length, weight, count, neighbors, looped, income — across millions of Bitcoin addresses. Without vectorization, feature engineering would have been orders of magnitude slower."
-
----
-
-# 2. PANDAS
-
-## Concepts
-
-Pandas gives you two labeled data structures: **`Series`** (1D) and **`DataFrame`** (2D — think SQL table in Python). The killer feature is the **index**: rows have labels, not just positions. Operations auto-align by index, so `df1 + df2` matches rows by label, not position.
-
-**Core ops to master:**
-
-**Selection.** `df['col']` returns a Series. `df[['col1', 'col2']]` returns a DataFrame. `.loc[]` is label-based (`df.loc[2024, 'revenue']`). `.iloc[]` is position-based (`df.iloc[0, 1]`). Confusing these is the #1 Pandas bug.
-
-**groupby.** Split-apply-combine. `df.groupby('category')['revenue'].sum()` splits rows by category, applies sum to revenue within each group, combines results. You can chain multiple aggs with `.agg({'col1': 'mean', 'col2': 'sum'})`.
-
-**merge.** SQL-style joins. `pd.merge(df1, df2, on='id', how='left')`. Options: `inner`, `outer`, `left`, `right`. If key names differ, use `left_on`/`right_on`.
-
-**Missing data.** Represented as `NaN`. Handle with `df.isna()`, `df.fillna(value)`, `df.dropna()`. Don't impute blindly — think about what the missing value represents.
-
-**Apply vs vectorized.** `df['col'].apply(func)` runs a Python function per element — slow. Prefer vectorized ops (`df['col'] * 2`, `df['col'].str.lower()`, `np.where(...)`). `apply` is a last resort.
-
-## Code you must be able to write
+### The actual `list_datasets` from your code
 
 ```python
-import pandas as pd
-import numpy as np
+def list_datasets(**filter_tags) -> list[str]:
+    valid_tags = set(_BaseDataset._tags.keys())
+    if invalid_tags := set(filter_tags.keys()) - valid_tags:
+        raise ValueError(
+            f"Unrecognized filter argument(s): {sorted(invalid_tags)}."
+        )
 
-# Creation
-df = pd.DataFrame({
-    'id': [1, 2, 3, 4],
-    'category': ['A', 'B', 'A', 'B'],
-    'revenue': [100, 200, 150, 250],
-    'date': pd.to_datetime(['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04'])
-})
-
-# Reading
-# df = pd.read_csv('file.csv')
-# df = pd.read_sql('SELECT * FROM table', connection)   # connect to SQL Server
-# df = pd.read_excel('file.xlsx')
-
-# Inspection
-df.head()
-df.info()
-df.describe()
-df.dtypes
-df.shape
-
-# Selection
-df['revenue']                              # Series
-df[['id', 'revenue']]                      # DataFrame
-df.loc[0, 'revenue']                       # label-based
-df.iloc[0, 2]                              # position-based
-df[df['revenue'] > 150]                    # filter
-
-# Adding/modifying columns
-df['revenue_inr'] = df['revenue'] * 83
-df['tier'] = np.where(df['revenue'] > 150, 'high', 'low')
-
-# groupby — the workhorse
-df.groupby('category')['revenue'].sum()
-df.groupby('category').agg({'revenue': ['sum', 'mean', 'count']})
-df.groupby('category').agg(total=('revenue', 'sum'), avg=('revenue', 'mean'))
-
-# Merge
-df2 = pd.DataFrame({'category': ['A', 'B'], 'manager': ['Alice', 'Bob']})
-merged = pd.merge(df, df2, on='category', how='left')
-
-# Missing data
-df['revenue'].isna().sum()
-df['revenue'].fillna(0)
-df.dropna(subset=['revenue'])
-
-# Sort
-df.sort_values('revenue', ascending=False)
-
-# Pivot
-df.pivot_table(index='category', values='revenue', aggfunc='sum')
-
-# Value counts (like GROUP BY COUNT)
-df['category'].value_counts()
-
-# String operations (vectorized)
-df['category'].str.lower()
-df['category'].str.contains('A')
-
-# Date operations
-df['month'] = df['date'].dt.month
-df['day_of_week'] = df['date'].dt.dayofweek
+    all_datasets = all_objects(
+        object_types=_BaseDataset,
+        package_name="pgmpy.datasets",
+        return_names=False,
+        filter_tags=filter_tags,
+    )
+    return sorted(
+        cls.get_class_tag("name") for cls in all_datasets
+        if cls.get_class_tag("name") is not None
+    )
 ```
 
-## Interview Q&A
+Design highlights worth name-dropping:
+- Validates filter tags against the known set (prevents silent bugs from typos)
+- Delegates discovery entirely to skbase
+- Returns sorted names for reproducibility
 
-**Q: Difference between `.loc` and `.iloc`?**
-`.loc` uses labels (index values, column names). `.iloc` uses integer positions. `df.loc['2024-01-01']` selects by date label; `df.iloc[0]` selects the first row regardless of its label.
+### The mixins you wrote
 
-**Q: How would you join SQL Server data into Pandas?**
-Use `pd.read_sql(query, connection)` with a pyodbc or SQLAlchemy connection. For large tables, read in chunks with `chunksize` to avoid memory issues. I'd push filtering and aggregation into SQL when possible — don't pull a million rows to compute a sum.
+Three mixin classes for different dataset formats:
 
-**Q: How do you handle missing values?**
-Depends on why they're missing. If random and rare, drop rows. If a meaningful absence (e.g., "no loan default"), fill with a sentinel or category. For numerical features I'd typically impute with median (robust to outliers); for categorical, with mode or a "Missing" category. Never impute blindly with mean without thinking.
+- **`_CovarianceMixin`** — for datasets distributed as covariance matrices (goldberg, spartina, lead, cities). Reads the matrix file and samples from a multivariate Gaussian. **This is the only place your code does real math** (see Section 1.6).
+- **`_TubingenBenchmarkMixin`** — for the Tübingen cause-effect benchmark (108 pairs). Each pair is separate files; `load_dataframe(pair_id)` and `load_ground_truth(pair_id)` accept IDs 1–108.
 
-**Q: `groupby` returns what?**
-A lazy `GroupBy` object — no computation yet. You must chain an aggregation (`.sum()`, `.mean()`, `.agg()`) or transformation (`.transform()`) to get a DataFrame back.
+### The expert knowledge parser you wrote
 
-**Q: `apply` vs vectorized operations?**
-`apply(func)` runs a Python function per row or element, which is slow — Python's for loop under the hood. Vectorized operations (`df['col'] * 2`, `df['col'].str.contains('x')`, `np.where(...)`) run in compiled code. I use `apply` only when there's no vectorized alternative.
+Nontrivial. `_parse_expert_knowledge` handles a domain-specific text format with three section types:
 
-**Q: How do you optimize Pandas for large data?**
-Use appropriate dtypes (`int8` instead of `int64` if values fit), read in chunks, filter early, use `categorical` dtype for low-cardinality strings, consider DuckDB or Polars for datasets that don't fit in memory.
+- `addtemporal` — temporal order of variables
+- `forbiddirect` — edges forbidden in the causal DAG
+- `requiredirect` (also accepts `requireddirect`) — edges that must be present
 
-## Your resume angle
-"In the Bitcoin project I used Pandas heavily for preprocessing — loading the BitcoinHeist dataset, handling class imbalance, feature engineering from transaction graph data, and preparing train/test splits. For Fern, Pandas would be the natural tool to pull MIS data from SQL Server and do ad-hoc analysis that's too complex for stored procedures alone."
+You wrote a state-machine parser that tracks the current section, strips line numbers from temporal lines, handles empty temporal entries (just a digit), and returns an `ExpertKnowledge` object. This is real parser engineering, not just `open()` and `split()`.
+
+### Why this refactor was architecturally superior
+
+- **Convention over configuration**: inherit from `_BaseDataset`, set `_tags`, done. No registry call.
+- **Impossible to forget registration**: adding a subclass auto-registers via introspection.
+- **Filterable**: `list_datasets(is_discrete=True, has_ground_truth=True)` → `['sachs_discrete']`.
+- **Ecosystem alignment**: pgmpy now follows the same pattern as sktime, skpro, skchange.
+
+### The fkiraly review — your behavioral-interview gold
+
+The PR conversation is worth rehearsing as a **STAR story for "tell me about a time a reviewer pushed back"**:
+
+> "In PR #2515, my reviewer @fkiraly — who is actually one of the skbase maintainers — initially thought I had removed the registry lookup entirely without replacement. He wrote: 'one thing that gets removed, not replaced, is the registry lookup — is this intentional, or an oversight?'
+>
+> I replied that I had removed the custom `DatasetRegistry` class because we were replacing the manual registry mechanism with `skbase.lookup.all_objects` for dynamic discovery. I pointed him to the new `list_datasets` function in `_base.py` that wraps `all_objects` with tag filtering, and explained that `load_dataset` now uses `all_objects` internally to find the correct class by its `name` tag.
+>
+> He came back with 'Ah, I overlooked `list_datasets`. Great!' and approved the PR. Then @ankurankan merged it and added four follow-up commits of his own — categorical and ordinal variable support and a filtering option on `list_datasets`.
+>
+> What I took from that: in open source, reviewers sometimes miss parts of a large PR. The right response is to clarify with specific references — file paths, function names — rather than get defensive. And the fact that the maintainer then built on top of my code rather than rewriting it meant the architecture was sound."
+
+This is a gold answer for any "tell me about disagreement" / "how do you handle feedback" question.
+
+### Likely follow-up questions
+
+**Q: What does `all_objects` actually do?**
+Walks the package's module hierarchy using Python's import machinery, inspects each module for classes, returns those inheriting from the target base class, filters by tag if specified.
+
+**Q: Why not `__subclasses__()`?**
+`__subclasses__()` only finds classes that have been imported at least once. Passive discovery fails unless you import everything eagerly. `all_objects` walks the package namespace and imports modules explicitly, so discovery is deterministic and complete.
+
+**Q: Why rename files from `_abalone.py` to `abalone.py`?**
+skbase's module scanner, following Python convention, treats leading-underscore modules as private and skips them. Underscore-prefixed files wouldn't be scanned, so their dataset classes wouldn't be discovered.
+
+**Q: Your earlier design in #2347 worked — why replace it?**
+It worked, but manual registration doesn't scale. Every new dataset required editing multiple files, and forgetting a registration was a silent failure. Inheritance-based auto-discovery removes that class of bug entirely. Plus aligning with skbase gave pgmpy consistency with the rest of the scientific Python ecosystem.
+
+**Q: What did you break?**
+Public API stayed compatible — `list_datasets()` and `load_dataset()` signatures are the same. Internally, the registry disappeared and tag access migrated from `cls.tags[key]` to `cls.get_class_tag(key)`. pytest caught breakages early.
+
+**Q: What are `_tags`?**
+Class-level dictionary of metadata describing what the dataset is. Used by `all_objects` for filtering and can be used by tests for parametrization.
 
 ---
 
-# 3. SQL / RDBMS — DEEP DIVE
+## 1.4 — PR #2571: Example models registry (same pattern, new target)
 
-You use SQL at Fern daily. The panel will push past basics — **prepare for advanced topics.**
+**Closes:** issue #2551
+**Scope:** `pgmpy/example_models/` — `_base.py`, `__init__.py`, three seed model classes
 
-## Concepts
+### What it was
 
-**Indexes.** A separate data structure (usually a B-tree) that makes lookups on indexed columns O(log n) instead of O(n) table scan.
-- **Clustered index**: determines the physical order of rows in the table. One per table. Usually the primary key.
-- **Non-clustered index**: a separate structure pointing to rows. Can have many per table.
-- **Downside**: indexes speed up reads but slow down inserts/updates/deletes because the index must be maintained.
-- **Covering index**: includes all columns needed by a query, so SQL Server doesn't do a key lookup back to the table.
+You applied the PR #2515 skbase discovery pattern to **example models**. Example models are predefined Bayesian networks (structure + often CPDs) — `alarm`, `asia`, `arth150`, etc. Different from datasets, which are tabular data.
 
-**Execution plans.** SQL Server optimizer converts your query into an execution plan — a tree of physical operators. Read the plan right-to-left, bottom-up. Key things to spot:
-- **Table scan / index scan**: reads every row. Bad on large tables unless you need most of them.
-- **Index seek**: uses the index to jump to specific rows. Good.
-- **Key lookup**: the index had some columns but had to jump back to the table for others. If frequent, create a covering index.
-- **Hash match vs merge join vs nested loop**: different join algorithms — optimizer chooses based on data size and sort state.
+### What you actually built
 
-**Stored procedures vs functions vs views.**
-- **Stored procedure**: compiled SQL that can take params, return multiple result sets, modify data, have side effects. Execution plan cached.
-- **Function**: returns a single value (scalar) or table (TVF). Should be deterministic and side-effect-free. Used inside queries.
-- **View**: a saved SELECT statement, treated like a virtual table. No parameters. Indexed views can materialize data.
+- `_BaseExampleModel(BaseObject)` — base class with tags: `name`, `n_nodes`, `n_edges`, `is_parameterized`, `is_discrete`, `is_continuous`, `is_hybrid`
+- Four mixin classes for different file formats:
+  - **`DiscreteMixin`** — gzipped BIF via `BIFReader(gzip.decompress(...))` → `DiscreteBayesianNetwork`
+  - **`BIFMixin`** — plain BIF via `BIFReader` → `DiscreteBayesianNetwork`
+  - **`ContinuousMixin`** — JSON via `LinearGaussianBayesianNetwork.load(file_obj)`
+  - **`DAGMixin`** — dagitty string via `DAG.from_dagitty(...)` (structure only, no CPDs)
+- `load_model(name)` and `list_models(**filter_tags)` — mirror the dataset API
+- **Three seed model classes** as examples:
+  - `Acid_1996` DAG via `DAGMixin`
+  - `arth150` continuous BN via `ContinuousMixin`
+  - `alarm` discrete BN via `DiscreteMixin`
 
-**Transaction isolation levels** (critical in fintech):
-| Level | Dirty read | Non-repeatable read | Phantom read |
-|-------|-----------|--------------------|--------------|
-| READ UNCOMMITTED | Yes | Yes | Yes |
-| READ COMMITTED (default) | No | Yes | Yes |
-| REPEATABLE READ | No | No | Yes |
-| SERIALIZABLE | No | No | No |
-| SNAPSHOT | No | No | No (uses row versioning) |
+### What you did NOT do (be honest)
 
-**ACID.** Atomicity (all or nothing), Consistency (valid state to valid state), Isolation (concurrent txns don't interfere), Durability (committed data survives crashes).
+- Did not write the test file for example models — other contributors added that
+- Did not add the full catalog of models — you seeded three, others extended
+- Did not write `BIFReader`, `DAG.from_dagitty`, or `LinearGaussianBayesianNetwork.load` — those existed. You delegated to them from the mixins.
 
-**Normalization.**
-- **1NF**: atomic values, no repeating groups.
-- **2NF**: 1NF + no partial dependency on composite key.
-- **3NF**: 2NF + no transitive dependencies (non-key doesn't depend on non-key).
-- **BCNF**: stricter 3NF.
-- Normalize for integrity, denormalize for read performance.
+### "I built the scaffolding, others extended it" — an underrated angle
 
-**Deadlocks.** Two transactions each hold a lock the other wants. SQL Server detects and kills the cheaper one (deadlock victim). Prevent by: accessing resources in the same order, shorter transactions, lower isolation where safe.
+From your own words:
 
-**CTE vs temp table vs table variable.**
-- **CTE** (`WITH x AS (...)`): query scoped, no statistics, good for readability and recursion.
-- **Temp table** (`#temp`): session scoped, has statistics, indexable, good for large intermediate results.
-- **Table variable** (`@t`): batch scoped, no statistics (optimizer guesses 1 row), good for small datasets only.
+> "For the example models PR, I built the registry infrastructure and three seed models showing the pattern — one for each format: discrete BIF, continuous JSON, and DAG dagitty. Other contributors then used my base class to add many more models. That's actually one of the outcomes I'm proudest of — my work unblocked a broader contribution pipeline."
 
-## Code you must be able to write
+**Say exactly that.** Unblocking others is bigger impact than a single feature — and it's a maturity signal.
 
-```sql
--- Window functions
-SELECT 
-    account_id,
-    transaction_date,
-    amount,
-    SUM(amount) OVER (PARTITION BY account_id ORDER BY transaction_date) AS running_total,
-    ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY transaction_date DESC) AS recency_rank,
-    LAG(amount, 1) OVER (PARTITION BY account_id ORDER BY transaction_date) AS prev_amount
-FROM transactions;
-
--- CTE with recursion (org hierarchy)
-WITH emp_hierarchy AS (
-    SELECT employee_id, manager_id, name, 1 AS level
-    FROM employees WHERE manager_id IS NULL
-    UNION ALL
-    SELECT e.employee_id, e.manager_id, e.name, h.level + 1
-    FROM employees e
-    JOIN emp_hierarchy h ON e.manager_id = h.employee_id
-)
-SELECT * FROM emp_hierarchy;
-
--- Find duplicate rows
-SELECT account_id, COUNT(*) 
-FROM transactions 
-GROUP BY account_id 
-HAVING COUNT(*) > 1;
-
--- Second highest salary
-SELECT MAX(salary) FROM employees 
-WHERE salary < (SELECT MAX(salary) FROM employees);
--- OR with window function
-SELECT DISTINCT salary FROM (
-    SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
-    FROM employees
-) x WHERE rnk = 2;
-
--- Stored procedure with error handling
-CREATE PROCEDURE sp_TransferFunds
-    @FromAccount INT, @ToAccount INT, @Amount DECIMAL(18,2)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    BEGIN TRY
-        BEGIN TRANSACTION;
-        UPDATE Accounts SET Balance = Balance - @Amount WHERE AccountID = @FromAccount;
-        UPDATE Accounts SET Balance = Balance + @Amount WHERE AccountID = @ToAccount;
-        COMMIT TRANSACTION;
-    END TRY
-    BEGIN CATCH
-        ROLLBACK TRANSACTION;
-        THROW;
-    END CATCH
-END;
-
--- JOIN types quick reference
--- INNER JOIN: only matching rows
--- LEFT JOIN: all left rows + matches (null if no match)
--- RIGHT JOIN: all right rows + matches
--- FULL OUTER JOIN: all rows from both, nulls where no match
--- CROSS JOIN: Cartesian product
-
--- Index creation
-CREATE NONCLUSTERED INDEX IX_Transactions_AccountDate 
-    ON Transactions (AccountID, TransactionDate) 
-    INCLUDE (Amount);   -- covering index
-```
-
-## Interview Q&A
-
-**Q: When would you use a clustered vs non-clustered index?**
-One clustered per table — use it on the column you most often range-scan or sort by (often the PK). Non-clustered for other frequent lookup columns. On a transactions table, clustered on `(AccountID, Date)` if queries usually filter by account and date range.
-
-**Q: You have a slow query. Walk me through diagnosis.**
-First check the execution plan. Look for table scans on large tables, key lookups, and expensive hash joins on unsorted data. Check statistics — stale stats lead to bad plans. Check for missing indexes the optimizer suggests. If the plan looks fine but it's still slow, look at wait stats — is it I/O bound, CPU bound, or blocked by another transaction? SQL Profiler or Extended Events can capture the actual execution.
-
-**Q: Dirty read vs non-repeatable read vs phantom read?**
-**Dirty read**: reading uncommitted data from another transaction. **Non-repeatable read**: same row read twice in your transaction returns different values because another committed an UPDATE in between. **Phantom read**: same range query returns different row counts because another transaction INSERTed into that range.
-
-**Q: How do you prevent deadlocks?**
-Access resources in a consistent order across transactions (e.g., always lock Account A before Account B by ID order). Keep transactions short. Use the lowest isolation level that's safe. For read-heavy workloads, SNAPSHOT isolation avoids many lock conflicts by using row versioning.
-
-**Q: CTE vs temp table?**
-CTE is a query-scoped named subquery — good for readability and recursion, but the optimizer may re-evaluate it if referenced multiple times. Temp table (`#t`) is materialized with statistics, so for large intermediate results that you join to multiple times, a temp table is faster.
-
-**Q: When would you denormalize?**
-When read performance on heavy aggregations outweighs the cost of maintaining redundant data. Typical case: reporting/analytics tables where joins across 6 normalized tables are too expensive. Also when you need a consistent snapshot (e.g., invoice with customer address at time of invoice, not current address).
-
-**Q: What's a covering index?**
-An index that contains all columns a query needs — either as key columns or as INCLUDEd columns. The query is answered from the index alone, no key lookup back to the table. Huge performance win for frequent queries.
-
-## Your resume angle
-"At Fern I use SQL Profiler and execution plans routinely. One common pattern I've seen is stored procedures that got slow after a customer's data grew — often it's a key lookup that wasn't a problem at 10k rows but hurts at 5M. I fix these by adding covering indexes or restructuring the query. For production defects, SQL Profiler traces help me reproduce and isolate the offending statement."
+### Math content: **zero.**
+Class design + delegation to existing parsers.
 
 ---
 
-# 4. TRANSFORMERS & HUGGING FACE
+## 1.5 — The "Top 13 contributor" framing (discussion #3270)
 
-This is high-risk because your resume explicitly mentions Phi-3-mini, LoRA, SFT, Unsloth. Be ready for deep technical questions.
+Your resume mentions top-13 in pgmpy v1.1.0. That release had many contributions — new algorithms, bug fixes, docs, infrastructure. Yours were **infrastructure-level** — dataset and example-model registries — which is often undercredited but genuinely valuable.
 
-## Concepts
+If asked "what's your most significant contribution?", lead with **PR #2515**. Shows iteration, maintainer collaboration, and engineering judgment.
 
-### The Transformer architecture
+---
 
-Introduced in *Attention Is All You Need* (Vaswani et al., 2017). Replaces RNNs for sequence modeling.
+## 1.6 — The one piece of real math in your code
 
-**The self-attention mechanism:**
-For each input token, we compute three projections:
-- **Query (Q)**: what am I looking for?
-- **Key (K)**: what do I offer?
-- **Value (V)**: what's my content?
+I audited every file you shared. There is exactly one place your code does something mathematical beyond file I/O and metadata:
 
-Attention scores = `softmax(QKᵀ / √d_k) · V`
-
-- `QKᵀ` gives a score for every pair of tokens.
-- Divide by `√d_k` (dimension of keys) to stabilize gradients — without scaling, large dot products push softmax into tiny-gradient regions.
-- Softmax turns scores into a probability distribution.
-- Multiply by V to get a weighted sum.
-
-**Multi-head attention**: run the above H times in parallel with different learned projections, concatenate, and project back. Each head can learn different relationships.
-
-**Full transformer block:**
-1. Multi-head self-attention
-2. Residual connection + LayerNorm
-3. Position-wise feedforward (2 linear layers with activation — typically GELU or SwiGLU)
-4. Residual connection + LayerNorm
-
-Stack N of these blocks.
-
-**Positional encoding.** Attention is order-agnostic (it sees a set, not a sequence). So we add positional info — either fixed sinusoidal encodings (original paper) or learned (BERT, GPT) or rotary (RoPE, used in LLaMA, Phi-3).
-
-### Three flavors of transformers
-
-| Type | Example | Training | Use case |
-|------|---------|----------|----------|
-| Encoder-only | BERT, RoBERTa | Masked language modeling | Classification, NER, embedding |
-| Decoder-only | GPT, Phi-3, LLaMA | Next-token (causal) | Generation, chat |
-| Encoder-Decoder | T5, BART | Span corruption | Translation, summarization |
-
-**You fine-tuned Phi-3-mini, which is decoder-only.**
-
-### Fine-tuning hierarchy
-
-- **Full fine-tuning**: update all parameters. Quality: best. Cost: massive — Phi-3-mini has 3.8B params, needs 30+ GB VRAM.
-- **LoRA (Low-Rank Adaptation)**: freeze original weights, add small trainable matrices. For a weight matrix W of shape (d, d), we write the update as `ΔW = B·A` where `A` is `(r, d)` and `B` is `(d, r)` with `r << d`. You train A and B only. For `d=4096, r=16`, you train 131k params instead of 16M per matrix.
-- **QLoRA**: LoRA on top of a 4-bit quantized base model. Fits 7B models on a single consumer GPU.
-- **SFT (Supervised Fine-Tuning)**: training paradigm where you fine-tune on (instruction, response) pairs. LoRA is the parameter method; SFT is the training objective.
-- **RLHF/DPO**: align model to preferences (ranked responses). Different problem from SFT.
-
-### Unsloth
-
-A library that accelerates LoRA/QLoRA fine-tuning by 2-5x through custom Triton kernels and optimized backward passes. 4-bit quantization shrinks memory ~4x vs fp16, enabling you to fine-tune large models on a single GPU.
-
-### Hugging Face ecosystem
-
-- **`transformers`**: model + tokenizer classes. `AutoModel`, `AutoTokenizer`, `AutoModelForCausalLM`, `AutoModelForSequenceClassification`.
-- **`datasets`**: streaming-friendly dataset library with a standard format.
-- **`tokenizers`**: fast Rust-based tokenizers.
-- **`peft`**: LoRA, prefix tuning, prompt tuning, etc.
-- **`accelerate`**: handles multi-GPU, mixed precision, gradient accumulation.
-- **`trl`**: SFTTrainer, DPOTrainer, PPO for RLHF.
-
-## Code you must be able to write / explain
+From `_CovarianceMixin` in `datasets/_base.py`:
 
 ```python
-# Basic inference
-from transformers import AutoTokenizer, AutoModelForCausalLM
-
-tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
-model = AutoModelForCausalLM.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
-
-inputs = tokenizer("What is Bayes' theorem?", return_tensors="pt")
-outputs = model.generate(**inputs, max_new_tokens=100, do_sample=True, temperature=0.7)
-print(tokenizer.decode(outputs[0], skip_special_tokens=True))
-
-# LoRA fine-tuning pattern (what you did)
-from peft import LoraConfig, get_peft_model
-from trl import SFTTrainer
-
-lora_config = LoraConfig(
-    r=16,                              # rank — controls capacity of adapter
-    lora_alpha=32,                     # scaling factor
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj", 
-                    "gate_proj", "up_proj", "down_proj"],  # attention + FFN
-    lora_dropout=0.05,
-    bias="none",
-    task_type="CAUSAL_LM",
-)
-model = get_peft_model(model, lora_config)
-model.print_trainable_parameters()   # e.g., "0.5% of total"
-
-# SFT with formatted instruction-response pairs
-trainer = SFTTrainer(
-    model=model,
-    train_dataset=dataset,
-    tokenizer=tokenizer,
-    dataset_text_field="text",
-    max_seq_length=2048,
-    args=training_args,
-)
-trainer.train()
+@classmethod
+def load_dataframe(cls) -> pd.DataFrame:
+    cov_matrix = cls._load_covariance_matrix()
+    mean = [0] * cls.get_class_tag("n_variables")
+    data = pd.DataFrame(
+        np.random.multivariate_normal(
+            mean, cov_matrix.values,
+            size=cls.get_class_tag("n_samples")
+        ),
+        columns=cov_matrix.columns,
+    )
+    return data
 ```
 
-## Interview Q&A
+### What this is doing mathematically
 
-**Q: Explain self-attention.**
-For each token, we project it into query, key, and value vectors. The query is compared against every key via dot product to produce attention weights — how much this token should attend to each other token. Those weights (after softmax) are used to compute a weighted sum of value vectors. The output is a new representation of each token that incorporates information from relevant other tokens. The full formula is `softmax(QKᵀ/√d_k)V`.
+Some datasets (goldberg, spartina, lead, cities) are distributed as **only the covariance matrix**, not raw data — because they come from published causal inference papers. To produce usable samples, you draw from a **multivariate Gaussian**:
 
-**Q: Why scale by √d_k?**
-As dimension grows, dot products grow in magnitude, pushing softmax into saturated regions with tiny gradients. Dividing by √d_k keeps variance roughly unit, so gradients flow.
+**X ~ N(0, Σ)**
 
-**Q: Why multi-head attention?**
-A single attention head averages relationships; different heads can specialize — one might track syntactic structure, another coreference, another positional. Multi-head gives the model parallel channels for different relationship types at the same computational cost as larger single-head attention.
+where Σ is the covariance matrix and 0 is the zero mean vector.
 
-**Q: Encoder-only vs decoder-only vs encoder-decoder?**
-Encoder-only (BERT) sees the full context bidirectionally — good for classification and embedding. Decoder-only (GPT, Phi-3) is autoregressive, generating one token at a time with causal masking — good for generation. Encoder-decoder (T5) has separate encoder and decoder with cross-attention — natural for seq2seq tasks like translation.
+### What you had to understand to write this correctly
 
-**Q: Why use LoRA instead of full fine-tuning?**
-Full fine-tuning updates billions of parameters, requires massive memory (optimizer states are 2x model size), and risks catastrophic forgetting. LoRA freezes the base model and trains small low-rank matrices A and B where the update is `ΔW = BA` with rank r << d. You train ~0.1-1% of parameters, get most of the quality, and can swap adapters per task.
+1. A **covariance matrix** is symmetric positive semi-definite; entry Σᵢⱼ = Cov(Xᵢ, Xⱼ)
+2. The file stores **only the upper triangular** (space-saving convention); you reconstruct the full symmetric matrix by mirroring:
+   ```python
+   mat[i, :i+1] = vals
+   mat[:i+1, i] = vals
+   ```
+3. Sampling from `N(0, Σ)` gives synthetic data with the specified dependence structure — crucial for benchmarking causal discovery, which operates on the covariance structure
+4. Zero mean is fine because causal discovery algorithms are typically scale/mean invariant — they work on correlations, not absolute values
 
-**Q: What rank did you use and why?**
-I used rank 16, which is a common default — high enough to adapt behavior for structured output tasks without overfitting on a small dataset, low enough to keep the adapter tiny. Higher rank (32, 64) helps for more complex adaptation; lower rank (4, 8) for simpler tasks.
+### How to talk about this in interview
 
-**Q: Why target both attention and feedforward layers with LoRA?**
-Attention layers learn what to attend to; FFN layers do most of the knowledge storage in transformers. Adapting only attention limits how much the model can learn new associations. Full coverage (q, k, v, o, gate, up, down) gives the adapter the most expressive capacity per parameter.
+> "There's one place in my code that touches real probability — for datasets distributed as covariance matrices rather than raw data, I wrote a `_CovarianceMixin` that samples from a zero-mean multivariate Gaussian with the given covariance structure. The sampling itself uses `np.random.multivariate_normal`, but I had to understand the file format — which stores only the upper triangular — and reconstruct the full symmetric matrix. I also had to understand why zero mean is acceptable, which is because causal discovery algorithms are typically scale and mean invariant. Beyond that single spot, my code is infrastructure."
 
-**Q: What does 4-bit quantization do?**
-Compresses each weight from 16 or 32 bits to 4 bits using a quantization scheme (NF4 in QLoRA). Cuts memory ~4x vs fp16 with minimal quality loss for inference. Training happens in higher precision on the LoRA adapters while the quantized base weights stay frozen.
+Better than claiming zero math — shows you engage with math when required.
+
+---
+
+# Part 2 — pgmpy math essentials (user-level understanding)
+
+**Framing:** you didn't implement these — but you need to understand them at a **user level** to explain what pgmpy does and why your infrastructure matters. Treat this as "I understand the domain my work operates in," not "I implemented these."
+
+## 2.1 Bayesian Networks — definition
+
+A Bayesian Network is `(G, P)` where G is a DAG over random variables and P is a set of CPDs — one per node — giving `P(Xᵢ | Parents(Xᵢ))`.
+
+Joint distribution factorizes:
+```
+P(X₁, ..., Xₙ) = ∏ᵢ P(Xᵢ | Parents(Xᵢ))
+```
+
+**Why it matters:** naively, joint over n binary vars needs 2ⁿ − 1 parameters. With BN structure, it's the sum of local CPD sizes — exponentially smaller for sparse graphs.
+
+### The Asia network (ships with pgmpy)
+
+Nodes: `asia, tub, smoke, lung, bronc, either, xray, dysp`
+
+Joint factorizes as:
+```
+P(asia) · P(smoke) · P(tub|asia) · P(lung|smoke) · P(bronc|smoke) ·
+P(either|tub,lung) · P(xray|either) · P(dysp|either,bronc)
+```
+
+8 local CPDs instead of one 256-cell joint.
+
+## 2.2 CPDs
+
+Discrete CPDs use `TabularCPD`:
+
+```python
+cpd_cancer = TabularCPD(
+    variable="Cancer", variable_card=2,
+    values=[[0.03, 0.05, 0.001, 0.02],
+            [0.97, 0.95, 0.999, 0.98]],
+    evidence=["Smoker", "Pollution"],
+    evidence_card=[2, 2],
+)
+```
+
+Each column = one combination of parent states; columns sum to 1.
+
+## 2.3 D-separation
+
+**Chain: A → B → C** — A and C dependent; given B, independent (B blocks).
+
+**Fork: A ← B → C** — A and C dependent (common cause); given B, independent.
+
+**Collider: A → B ← C** — A and C independent unconditionally; given B (or any descendant), they become dependent. **"Explaining away."**
+
+Classic example: Rain and Sprinkler both cause Wet Grass. Marginally independent. Observing Wet Grass + Sprinkler → belief in Rain decreases.
+
+## 2.4 Inference algorithms pgmpy ships
+
+- **Variable Elimination (VE)** — exact, depends on elimination order (finding optimal order is NP-hard; pgmpy uses heuristics)
+- **Belief Propagation** — exact for tree-structured graphs
+- **Sampling** — approximate: forward, likelihood weighting, Gibbs/MCMC
+
+Exact inference in general BNs is NP-hard → approximate methods for dense networks.
+
+## 2.5 Parameter learning
+
+- **MLE**: `P̂(X=x | Parents=u) = count / count`. Overfits on small data (zero counts break inference)
+- **Bayesian with Dirichlet prior**: adds pseudo-counts, regularizes
+- **BDeu**: uniform pseudo-counts scaled by `equivalent_sample_size`
+- **EM** for latent variables
+
+## 2.6 Structure learning
+
+- **Score-based**: BIC, K2, BDeu + search (hill-climbing, tabu)
+- **Constraint-based**: PC algorithm uses CI tests (χ² for discrete, Pearson for continuous)
+- **Hybrid**: MMHC
+
+## 2.7 Interview Q&A on pgmpy math
+
+**Q: What is a Bayesian Network?**
+A DAG over random variables where each node has a CPD giving its distribution conditional on its parents. The DAG encodes conditional independencies, letting the joint factorize into local CPDs — reducing parameter count from exponential to sum of local tables.
+
+**Q: Why Bayesian estimator over MLE?**
+MLE assigns zero probability to unseen events, breaking inference. Dirichlet prior with pseudo-counts regularizes — unseen states get small but non-zero probability. `equivalent_sample_size` controls prior strength.
+
+**Q: Structure learning vs causal discovery?**
+Structure learning recovers a DAG consistent with the data's CI structure — but multiple DAGs share the same CI (Markov equivalence class). Causal discovery tries to identify the specific causal DAG, which needs additional assumptions (faithfulness, no hidden confounders).
+
+**Q: Did you implement any of these?**
+No — my work is infrastructure. Dataset and model registries. The algorithms are implemented by other contributors. I understand them at the level needed to build tools for them.
+
+---
+
+# Part 3 — Bitcoin Ransomware Detection (from your actual notebook)
+
+> **This section is rewritten from your actual `bitcoin_ransomware.ipynb`. Earlier versions of this doc claimed `class_weight='balanced'` and "stratified split" — your code shows neither of those. Corrected here.**
+
+## 3.1 — What your code actually shows
+
+```python
+X = df[['year', 'day', 'length', 'weight', 'count', 'looped', 'neighbors', 'income']]
+y = df['label']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+clf = RandomForestClassifier()   # all defaults — 100 estimators, no class_weight
+clf.fit(X_train, y_train)
+```
+
+Plain vanilla — no class_weight, no stratification, no hyperparameter tuning, no SMOTE.
+
+## 3.2 — The data facts (honest)
+
+- **2,916,697 addresses** total
+- **29 unique labels** — 28 ransomware families + `white` (benign). Your resume says "29 ransomware families" — slightly off (actual: 28). If pressed, say "around 29 labels in the dataset, the majority being benign." Don't get into counting debates.
+- **Severe class imbalance**: 2,875,284 out of 2,916,697 are `white` → **98.6% benign**
+- Some families have fewer than 10 samples in the full dataset (montrealComradeCircle: 1, montrealSam: 1, montrealXLocker: 1)
+
+## 3.3 — Features: code has 8, resume lists 6
+
+**In your code:** `year, day, length, weight, count, looped, neighbors, income` (8 features)
+
+**On your resume:** `length, weight, count, looped, neighbors, income` (6 features)
+
+**Strategy:** Lead with the 6 on your resume. If asked to name all features, say: *"The 6 transaction-graph features listed on my resume, plus `year` and `day` as temporal context — 8 total."*
+
+## 3.4 — Features explained (all 8)
+
+| Feature | Type | What it captures |
+|---|---|---|
+| `length` | int | Length of the transaction chain |
+| `weight` | float | BTC flow (fraction from a single source) |
+| `count` | int | Number of transactions at the address |
+| `looped` | binary (0/1) | Whether coins were sent back to source |
+| `neighbors` | int | Distinct addresses transacted with |
+| `income` | float | Total BTC received |
+| `year` | int | Year of transaction (temporal) |
+| `day` | int | Day of year 1–365 (temporal) |
+
+## 3.5 — Model (what you actually used)
+
+- `RandomForestClassifier()` with **all scikit-learn defaults** (100 estimators, gini criterion, no class_weight, no max_depth limit)
+- `train_test_split(test_size=0.2, random_state=42)` — **not stratified**
+- Training ran to completion; model saved with `joblib.dump` as `model.pkl`
+
+## 3.6 — What "addressing class imbalance" actually means in your work
+
+**Your code did NOT:**
+- Use `class_weight='balanced'`
+- Apply SMOTE or other oversampling
+- Use stratified sampling
+- Tune any hyperparameters
+
+**Your code DID:**
+- Call `df['label'].value_counts()` — saw the 2.87M vs ~40K split clearly
+- Use `classification_report` on test predictions — got per-class precision/recall/F1
+- Observe that macro F1 = 0.13 while weighted F1 = 0.99 — exposed the imbalance
+- Identify which families the model learned (5) vs didn't (23)
+
+**The honest framing:**
+
+> "I addressed class imbalance by using per-class metrics — precision, recall, F1 via `classification_report` — instead of relying on accuracy, which would have been misleading. This revealed that the model learned the majority benign class and a handful of the larger ransomware families, but struggled on rare families with few samples. The observation was the extent of the handling in the scope of this final year project."
+
+This is **honest and defensible.** Awareness is the first step. Don't overclaim by saying you used SMOTE or class weights — you didn't.
+
+## 3.7 — The 60-second pitch (resume-scoped, code-honest)
+
+> "This was my B.Tech final year project at Anna University, done between January and May 2024. I built a machine learning model to classify Bitcoin addresses as benign or linked to ransomware, using the UCI BitcoinHeist dataset — about 2.9 million addresses.
+>
+> I trained a Random Forest classifier using scikit-learn. The features were transaction-graph derived — length, weight, count, looped, neighbors, income — with year and day as temporal context. I used an 80/20 train/test split with a fixed random state.
+>
+> The main ML challenge was class imbalance — over 98% of addresses are benign. I addressed this by using per-class precision, recall, and F1 metrics instead of relying on accuracy, which would have been misleading. That let me analyze prediction behavior across ransomware categories and see which families the model learned well versus which remained hard because of low sample counts.
+>
+> I chose Random Forest because it handles non-linear feature interactions, gives feature importance out of the box, and doesn't require heavy hyperparameter tuning — a good fit for a 2.9 million row tabular dataset."
+
+## 3.8 — Interview Q&A (honest-code version)
+
+**Q: Walk me through it.**
+Use the 60-second pitch.
+
+**Q: Why Random Forest?**
+Non-linear interactions, robust to outliers, gives feature importance for interpretability, less tuning than gradient boosting, variance reduction via ensemble averaging.
+
+**Q: How did you handle class imbalance?**
+Use the honest framing from 3.6:
+> "I addressed it by using per-class metrics — precision, recall, F1 — instead of accuracy, so I could see the model's behavior per family. Looking at macro F1 versus weighted F1 exposed that the model was learning the majority class and a few big families but not the rare ones. In this project I didn't apply SMOTE or class weights — the observation was the scope."
+
+**Q: Did you use `class_weight='balanced'`?**
+Honest:
+> "No, I used default RandomForestClassifier parameters. I didn't apply weighted training in this project — something I'd try in a follow-up along with SMOTE."
+
+**Q: Did you stratify your split?**
+Honest:
+> "No — I used a plain 80/20 split with a fixed random state. With 2.9 million rows the class ratios come out roughly preserved, but stratified sampling would have been a cleaner choice."
+
+**Q: What features did you use?**
+> "Six transaction-graph features — length, weight, count, looped, neighbors, income — plus year and day as temporal context, so eight total."
+
+**Q: What was your accuracy?**
+> "About 99%. But that's a misleading headline on this dataset — over 98% of addresses are benign, so a majority-class predictor would score similarly. The more informative metric is per-class behavior, which showed the model learned the large classes well and struggled on the rare families."
+
+**Q: How would you improve it?**
+Three standard directions:
+1. Try gradient boosting (XGBoost / LightGBM) — often handles imbalance better
+2. Apply SMOTE or similar oversampling for rare families
+3. Use stratified sampling and class weights
+Keep it short — this was an FYP, it's done.
+
+**Q: Why not a neural network or graph neural network?**
+Overkill for 8 tabular features, loses interpretability. A GNN on the raw transaction graph could capture more structure than summary features, but that's a different project scope.
+
+**Q: What were the biggest limitations?**
+> "The model is effectively a binary classifier in practice — benign versus one of the larger ransomware families. Families with fewer than a few hundred samples weren't learned at all. That's an artifact of the dataset distribution and wasn't something a standard Random Forest was going to solve on its own."
+
+---
+
+# Part 4 — LoRA / Phi-3 fine-tuning project (code-accurate, rehearsed)
+
+> **This section is rewritten from the actual notebook you shared. Corrects earlier cram-pack assumptions about alpha and dropout. Also incorporates the two real issues you observed and your resume's "analyzed output inconsistencies" framing.**
+
+## 4.1 — Your exact stack and config
+
+- **Environment:** Google Colab, Tesla T4 GPU (14.7 GB VRAM), free tier
+- **Base model:** `unsloth/Phi-3-mini-4k-instruct` — Microsoft's 3.8B parameter decoder-only model (32 layers, hidden 3072, FFN 8192, RMSNorm, SiLU, rotary embeddings). Unsloth patches it as `MistralForCausalLM` because Phi-3-mini uses Mistral-style blocks.
+- **Loaded in 4-bit** via `FastLanguageModel.from_pretrained`, `max_seq_length = 2048`
+- **Dataset:** `pdx97/Schema_Based_Instruction_Dataset` — 360 math word problems labeled with Schema (Additive, Multiplicative, …) and Sub-Category (Total, Ratios/Proportions, …). Split 90/10 → **324 train / 36 eval**.
+- **Prompt template:** Alpaca-style with `### Problem:` and `### Response:` sections
+
+## 4.2 — Your LoRA config (memorize this exactly)
+
+```python
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 16,
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj"],
+    lora_alpha = 16,          # scaling factor α/r = 1.0
+    lora_dropout = 0,
+    bias = "none",
+    use_gradient_checkpointing = True,
+    random_state = 42,
+)
+```
+
+**Trainable parameters:** **29,884,416 of 3,850,963,968 = 0.78%.** This is your headline number.
+
+## 4.3 — Your training setup
+
+```python
+per_device_train_batch_size = 2
+gradient_accumulation_steps = 8      # effective batch = 16
+max_steps = 50                        # ~3 epochs over 324 examples
+learning_rate = 3e-4
+warmup_steps = 5
+optim = "adamw_8bit"                  # 8-bit AdamW for memory
+eval_steps = 10
+```
+
+Training completed in ~220 seconds via `trl.SFTTrainer`.
+
+## 4.4 — The two issues you observed (OWN THESE)
+
+Your resume says you *"evaluated model performance on unseen inputs and analyzed output inconsistencies for further refinement."* Here's what that actually means:
+
+**Issue 1 — Training loss collapsed to ~2.44e-08.**
+A loss at 10⁻⁸ means the model is predicting target tokens with probability ~1.0. Red flag for **overfitting** — the output space is tiny (only a handful of Schema/Sub-Category combinations), so at LR 3e-4 with no dropout, the model memorized it in ~50 steps.
+
+**Issue 2 — Generation on a test prompt was empty.**
+After fine-tuning, the model produced nothing after `### Response:`. Likely causes: (a) overfitting collapsed generation behavior, (b) the template's trailing whitespace with no explicit EOS token trained the model to emit EOS immediately.
+
+**You flagged both in the notebook.** That's the mature read — not a failure, a diagnosis.
+
+## 4.5 — The 60-second pitch (memorize this)
+
+> "This was a learning project to understand LoRA fine-tuning end-to-end. I fine-tuned Phi-3-mini — Microsoft's 3.8 billion parameter model — using Unsloth with 4-bit quantization to fit it on a Colab T4 with 14 GB of VRAM. The task was structured output generation: mapping math word problems to a Schema label like Additive or Multiplicative, and a Sub-Category label like Total or Ratios.
+>
+> I configured LoRA at rank 16 with alpha 16, targeting both attention projections — q, k, v, o — and the feedforward projections — gate, up, down. That trained only 0.78% of the parameters, about 30 million out of 3.85 billion. I used the trl library's SFTTrainer for the supervised fine-tuning with an Alpaca-style prompt template, effective batch size 16 via gradient accumulation, and AdamW-8bit to save optimizer memory.
+>
+> When I evaluated on unseen inputs, I observed output inconsistencies — specifically, the training loss collapsed to near-zero, which signaled overfitting on the small output space, and generation on a test prompt came out empty. I flagged both as needing refinement. The fixes I'd apply next are a lower learning rate, adding lora_dropout for regularization, early stopping on eval loss, and cleaner EOS handling in the template."
+
+## 4.6 — The 30-second version (if they cut you off)
+
+> "I fine-tuned Phi-3-mini using LoRA via Unsloth with 4-bit quantization, on a structured output task — mapping math problems to Schema and Sub-Category labels. Rank 16 adapter on attention and FFN layers, about 0.78% of parameters trained. I used SFT via trl's SFTTrainer. On evaluation I observed output inconsistencies — training loss collapsed indicating overfitting, and generation came out empty on test prompts — which I flagged for further refinement."
+
+## 4.7 — Resume line → what you say
+
+| Resume line | What you say |
+|---|---|
+| *"Fine-tuned an instruction-based LLM (Phi-3-mini) using LoRA and SFT"* | "Phi-3-mini is Microsoft's 3.8B decoder-only model. I used the Unsloth-optimized version. SFT means supervised fine-tuning — training on (input, expected-output) pairs with cross-entropy, as opposed to reward-based methods like RLHF or DPO." |
+| *"Trained the model to map natural language inputs to Schema and Sub-category labels"* | "Dataset was `pdx97/Schema_Based_Instruction_Dataset` — 360 math word problems labeled with Schema (Additive/Multiplicative) and Sub-Category (Total/Ratios). 90/10 train/eval split." |
+| *"Designed custom prompt templates"* | "Alpaca-style template with an instruction preamble, `### Problem:` for input, and `### Response:` containing `Schema:` and `Sub-Category:` fields. Trains the model to produce output in that exact structure." |
+| *"Applied parameter-efficient fine-tuning using Unsloth with 4-bit quantization"* | "Unsloth accelerates LoRA via custom Triton kernels — roughly 2× faster than vanilla transformers+peft. 4-bit quantization shrinks the frozen base ~4× vs fp16 — required to fit Phi-3 on a T4's 14 GB." |
+| *"Configured LoRA adapters on attention and feedforward layers"* | "Rank 16, alpha 16 — scaling factor 1.0. q/k/v/o for attention, gate/up/down for FFN. Attention controls what the model attends to; FFN stores most of the task-specific knowledge. Covering both gives the adapter the most expressive capacity per parameter." |
+| *"Evaluated model performance on unseen inputs and analyzed output inconsistencies for further refinement"* | "I tested on held-out prompts and observed two issues. First, training loss dropped to around 10⁻⁸, which indicates severe overfitting — the output space was small, with only a few unique label combinations, so the model memorized it. Second, generation on a test prompt produced empty output, which I diagnosed as a combination of overfitting and the template lacking explicit EOS token handling. I flagged both for further refinement." |
+
+## 4.8 — Interview Q&A
+
+**Q: Why alpha = 16 and not 32?**
+I matched alpha to rank, so the scaling factor α/r is 1.0 — a common default where the adapter contributes at natural magnitude without dampening or amplification. Higher alpha would amplify the adapter's effect.
+
+**Q: Why target both attention and FFN?**
+Attention projections learn what to attend to; FFN layers store most of the model's knowledge. Adapting only attention limits how much task-specific information the adapter can encode. Covering q, k, v, o, gate, up, down gives the most expressive capacity per parameter.
+
+**Q: Why 4-bit quantization?**
+To fit on a T4's 14 GB. Phi-3-mini in fp16 is ~7.6 GB for weights alone, plus activations, gradients, and optimizer state. 4-bit shrinks the frozen base model ~4× — leaving room for LoRA training.
+
+**Q: Your training loss was 10⁻⁸ — is that good?**
+No, it's a red flag. It indicates overfitting — the model memorized the small output space. Realistic SFT runs show loss decreasing to somewhere around 0.1–1.0 and stabilizing, not collapsing to zero.
+
+**Q: Your test output was empty — what's wrong?**
+I flagged that as needing debugging. Hypothesis: aggressive overfitting collapsed generation behavior, and the template had trailing blank lines with no explicit EOS — so the model may have learned to predict EOS immediately after `### Response:`.
+
+**Q: So did the model actually work?**
+It didn't generalize well. This was a learning project — I set up the pipeline end-to-end, but output quality wasn't production-ready. I took away concrete understanding of what overfitting looks like in a fine-tuning context and how template design affects generation.
+
+**Q: What would you do differently next time?**
+Four fixes: (1) lower learning rate from 3e-4 to 1e-4, (2) add `lora_dropout = 0.05` for regularization, (3) use eval_loss-based early stopping instead of fixed max_steps, (4) clean up the template with explicit EOS token handling.
+
+**Q: What is `gradient_accumulation_steps` doing?**
+Accumulates gradients over multiple forward passes before the optimizer step. I used batch 2 × grad_accum 8 → effective batch 16 — necessary because the T4 can't fit batch 16 directly. Trades wall-clock time for fitting in limited VRAM.
+
+**Q: Why `adamw_8bit`?**
+Standard AdamW stores momentum and variance in fp32 — 8 bytes per param. On 30M trainable params that's ~240 MB just for optimizer state. `adamw_8bit` from bitsandbytes quantizes to 8-bit, saving ~75% of that with negligible quality impact.
 
 **Q: SFT vs RLHF vs DPO?**
-SFT trains on labeled (prompt, response) pairs with standard cross-entropy — teaches the model to imitate. RLHF trains a reward model on human preference pairs, then optimizes the LM with PPO to maximize reward. DPO skips the reward model — directly optimizes the LM on preference pairs with a clever loss derivation. Typical pipeline: pretrain → SFT → DPO/RLHF.
+SFT trains on (prompt, response) pairs with cross-entropy — imitation learning. RLHF trains a reward model on preference pairs, then optimizes the LM with PPO. DPO skips the reward model — directly optimizes the LM on preference pairs with a clever loss. Typical pipeline: pretrain → SFT → DPO/RLHF.
 
-**Q: What's a tokenizer doing?**
-Converting text into integer token IDs the model can consume. Modern tokenizers use subword algorithms — BPE (GPT), WordPiece (BERT), or SentencePiece (LLaMA, Phi-3) — which balance vocabulary size with out-of-vocabulary robustness. The same text can tokenize differently across models.
+**Q: Why scale attention by √d_k?**
+Without scaling, dot products grow with dimension, pushing softmax into saturated regions with tiny gradients. Dividing by √d_k keeps variance roughly unit, so gradients flow.
 
-## Your resume angle
-"In my LLM fine-tuning project I used LoRA on Phi-3-mini with Unsloth for 4-bit quantized training. I configured rank-16 adapters on both attention projections and FFN layers to give the model enough capacity to learn schema-to-sub-category mappings. The SFT objective on my structured instruction dataset aligned outputs to the target format. I evaluated on held-out inputs and did error analysis on inconsistencies — common failures were schema hallucinations on under-represented categories, which I'd address in a follow-up with more balanced data or higher-rank adapters."
+## 4.9 — Strategic framing note
 
----
-
-# 5. DSA — PATTERNS & TEMPLATES
-
-You don't have time to grind 100 LeetCode problems. You need **pattern recognition** and **template code** for the 6 patterns below. Practice one problem per pattern.
-
-## Complexity recap
-
-| Operation | Array | Hash Map | Sorted Array | Heap | Balanced BST |
-|-----------|-------|----------|--------------|------|--------------|
-| Access by index | O(1) | — | O(1) | — | — |
-| Search | O(n) | O(1) avg | O(log n) | — | O(log n) |
-| Insert | O(n) | O(1) avg | O(n) | O(log n) | O(log n) |
-| Delete | O(n) | O(1) avg | O(n) | O(log n) | O(log n) |
-| Min/Max | O(n) | O(n) | O(1) | O(1) | O(log n) |
-
-## Pattern 1: Two pointers
-
-Use when array is sorted or when finding pairs.
-
-```python
-# Two sum on sorted array
-def two_sum_sorted(arr, target):
-    left, right = 0, len(arr) - 1
-    while left < right:
-        s = arr[left] + arr[right]
-        if s == target:
-            return [left, right]
-        elif s < target:
-            left += 1
-        else:
-            right -= 1
-    return []
-```
-
-## Pattern 2: Sliding window
-
-Use for substrings/subarrays with a constraint.
-
-```python
-# Longest substring without repeating characters
-def longest_unique_substring(s):
-    seen = {}
-    left = 0
-    max_len = 0
-    for right, ch in enumerate(s):
-        if ch in seen and seen[ch] >= left:
-            left = seen[ch] + 1
-        seen[ch] = right
-        max_len = max(max_len, right - left + 1)
-    return max_len
-```
-
-## Pattern 3: Hash map counting
-
-Use for frequency problems, anagrams, subarray sums.
-
-```python
-# Subarray sum equals k
-def subarray_sum(nums, k):
-    count = 0
-    prefix_sum = 0
-    seen = {0: 1}        # prefix_sum -> count
-    for n in nums:
-        prefix_sum += n
-        if prefix_sum - k in seen:
-            count += seen[prefix_sum - k]
-        seen[prefix_sum] = seen.get(prefix_sum, 0) + 1
-    return count
-```
-
-## Pattern 4: Binary search
-
-On sorted array, or "search on the answer" for optimization problems.
-
-```python
-# Classic binary search
-def binary_search(arr, target):
-    lo, hi = 0, len(arr) - 1
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        if arr[mid] == target:
-            return mid
-        elif arr[mid] < target:
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return -1
-
-# Search in rotated sorted array
-def search_rotated(nums, target):
-    lo, hi = 0, len(nums) - 1
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        if nums[mid] == target:
-            return mid
-        if nums[lo] <= nums[mid]:              # left half sorted
-            if nums[lo] <= target < nums[mid]:
-                hi = mid - 1
-            else:
-                lo = mid + 1
-        else:                                   # right half sorted
-            if nums[mid] < target <= nums[hi]:
-                lo = mid + 1
-            else:
-                hi = mid - 1
-    return -1
-```
-
-## Pattern 5: BFS/DFS on tree or graph
-
-```python
-from collections import deque
-
-# BFS on graph
-def bfs(graph, start):
-    visited = {start}
-    queue = deque([start])
-    order = []
-    while queue:
-        node = queue.popleft()
-        order.append(node)
-        for neighbor in graph[node]:
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(neighbor)
-    return order
-
-# DFS recursive
-def dfs(node, visited, graph):
-    if node in visited:
-        return
-    visited.add(node)
-    for neighbor in graph[node]:
-        dfs(neighbor, visited, graph)
-
-# Tree level order
-def level_order(root):
-    if not root: return []
-    result = []
-    queue = deque([root])
-    while queue:
-        level = []
-        for _ in range(len(queue)):
-            node = queue.popleft()
-            level.append(node.val)
-            if node.left: queue.append(node.left)
-            if node.right: queue.append(node.right)
-        result.append(level)
-    return result
-
-# Number of islands (BFS on grid)
-def num_islands(grid):
-    if not grid: return 0
-    rows, cols = len(grid), len(grid[0])
-    count = 0
-    def bfs(r, c):
-        queue = deque([(r, c)])
-        grid[r][c] = '0'
-        while queue:
-            x, y = queue.popleft()
-            for dx, dy in [(-1,0),(1,0),(0,-1),(0,1)]:
-                nx, ny = x+dx, y+dy
-                if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] == '1':
-                    grid[nx][ny] = '0'
-                    queue.append((nx, ny))
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == '1':
-                count += 1
-                bfs(r, c)
-    return count
-```
-
-## Pattern 6: Dynamic programming (one template)
-
-```python
-# Coin change — min coins to make amount
-def coin_change(coins, amount):
-    dp = [float('inf')] * (amount + 1)
-    dp[0] = 0
-    for i in range(1, amount + 1):
-        for coin in coins:
-            if coin <= i:
-                dp[i] = min(dp[i], dp[i - coin] + 1)
-    return dp[amount] if dp[amount] != float('inf') else -1
-
-# Fibonacci with memoization
-def fib(n, memo={}):
-    if n in memo: return memo[n]
-    if n < 2: return n
-    memo[n] = fib(n-1, memo) + fib(n-2, memo)
-    return memo[n]
-```
-
-## Interview rules for coding
-
-1. **Read the problem twice.** Clarify constraints — array size, value ranges, edge cases (empty input, single element, duplicates).
-2. **State the brute force first.** Always. Give its time complexity.
-3. **Optimize.** State the approach and new complexity before coding.
-4. **Write clean code.** Meaningful variable names. Comments for non-obvious steps.
-5. **Test with a small example** out loud after writing.
-6. **State final complexity.** Time and space.
-7. **Talk while you code.** Silence reads as uncertainty.
+Your resume phrase *"analyzed output inconsistencies for further refinement"* is well-written — it's honest and professional. **Don't walk it back in the interview.** Observing problems, analyzing them, and identifying refinement needs is what real ML engineering looks like. An interviewer who has run fine-tuning jobs will respect the honesty; one who hasn't won't push. Either way you win.
 
 ---
 
-# 6. PROBABILITY & STATISTICS
+# Part 5 — Rapid-reference "tell me about your PRs" answer (60-second version)
 
-High-yield given pgmpy. Own Bayes' theorem and conditional independence in your sleep.
+Memorize this. Correct, honest, three-act:
 
-## Concepts
+> "I have three pgmpy contributions that form a clean evolution. My first PR, #2347, introduced a unified dataset loading API — pgmpy didn't have a standardized way to list or load example datasets. I built `_BaseDataset`, a `DATASET_REGISTRY`, and a `register_dataset_class` function, seeded with five concrete datasets.
+>
+> After design discussions in issues #2506 and #2512, we decided the manual registry wouldn't scale well. PR #2515 was the refactor: I replaced my own earlier registry with skbase-based auto-discovery. `_BaseDataset` now inherits from `skbase.base.BaseObject`, tags became class attributes, and `skbase.lookup.all_objects` handles discovery via introspection. The skbase maintainer fkiraly reviewed and approved.
+>
+> PR #2571 extended the same pattern to example models — I built the registry infrastructure and three seed model classes, one per format, and other contributors have since added more models on top. My work is infrastructure-level — I didn't implement inference or learning algorithms. Those are by other contributors. What I built is the scaffolding that makes the library easier to use and extend."
 
-### Probability basics
-
-- **Probability**: `P(event)` in [0, 1].
-- **Conditional probability**: `P(A|B) = P(A ∩ B) / P(B)` — probability of A given B has happened.
-- **Independence**: `P(A ∩ B) = P(A) · P(B)`, equivalently `P(A|B) = P(A)`.
-- **Conditional independence**: `P(A ∩ B | C) = P(A|C) · P(B|C)`. A and B are independent *given* C — even if they're dependent marginally. **This is the core factorization assumption in Bayesian networks.**
-
-### Bayes' theorem (own this cold)
-
-**`P(A|B) = P(B|A) · P(A) / P(B)`**
-
-In words: **posterior = (likelihood × prior) / evidence.**
-
-Canonical medical example: Disease prevalence 0.1%. Test is 99% accurate (true positive rate and true negative rate). You test positive. What's the probability you have the disease?
-
-```
-P(D|+) = P(+|D) · P(D) / P(+)
-       = 0.99 · 0.001 / [0.99·0.001 + 0.01·0.999]
-       = 0.00099 / 0.01098
-       ≈ 0.090  → only 9%!
-```
-
-The counterintuitive answer is because the prior is so low. Essential intuition.
-
-### Chain rule of probability
-
-`P(A, B, C) = P(A) · P(B|A) · P(C|A, B)`
-
-Bayesian networks exploit conditional independence to simplify this — if C is independent of A given B, then `P(C|A,B) = P(C|B)`, and the joint factorizes much more compactly.
-
-### Expectation & variance
-
-- **Expectation**: `E[X] = Σ x · P(x)` (discrete), `∫ x · f(x) dx` (continuous).
-- **Variance**: `Var(X) = E[(X - E[X])²] = E[X²] - E[X]²`.
-- **Std dev**: `σ = √Var(X)`.
-- **Covariance**: `Cov(X,Y) = E[(X - E[X])(Y - E[Y])]`.
-- **Correlation**: `ρ = Cov(X,Y) / (σ_X · σ_Y)` — in [-1, 1].
-
-### Key distributions
-
-- **Bernoulli(p)**: single trial, P(1)=p, P(0)=1-p. Mean p, variance p(1-p).
-- **Binomial(n, p)**: sum of n Bernoullis. Mean np, variance np(1-p).
-- **Normal(μ, σ²)**: bell curve. ~68% within 1σ, ~95% within 2σ, ~99.7% within 3σ.
-- **Poisson(λ)**: count of rare events. Mean = variance = λ.
-- **Uniform(a, b)**: all values equally likely.
-
-### Central Limit Theorem
-
-Sum (or mean) of n i.i.d. random variables with finite variance approaches a Normal distribution as n grows, regardless of the original distribution's shape. **This is why Normal appears everywhere.**
-
-### Law of Large Numbers
-
-Sample mean converges to population mean as sample size grows.
-
-### Hypothesis testing
-
-- **Null hypothesis H₀**: the default assumption (e.g., "no effect").
-- **Alternative H₁**: what you'd accept if evidence is strong.
-- **p-value**: probability of seeing data this extreme assuming H₀ is true.
-- **Reject H₀** if p < α (typically 0.05).
-- **Type I error**: rejecting a true H₀ (false positive). Probability = α.
-- **Type II error**: failing to reject a false H₀ (false negative). Probability = β.
-- **Power**: `1 - β`.
-
-### Statistics basics
-
-- **Mean** is sensitive to outliers; **median** is robust.
-- **Correlation ≠ causation** — a hidden confounder can create correlation without causal relationship. **Causal discovery algorithms like SortnRegress try to recover causal structure from observational data using additional assumptions like varsortability.**
-
-## Interview Q&A
-
-**Q: Explain Bayes' theorem with an example.**
-[Use the medical test example above. Calculate it out loud.] The key insight is that even a very accurate test can produce a low posterior when the prior (base rate) is low, because false positives on the large negative population outnumber true positives.
-
-**Q: What's conditional independence? Why does it matter for Bayesian networks?**
-Two variables A and B are conditionally independent given C if `P(A,B|C) = P(A|C)·P(B|C)`. They might be correlated marginally — say sprinkler usage and wet grass are correlated — but become independent once you condition on rain. Bayesian networks encode these conditional independencies as missing edges in a DAG, which dramatically reduces the number of parameters needed to represent the joint distribution.
-
-**Q: What's the difference between correlation and causation?**
-Correlation is a statistical association — X and Y vary together. Causation means X directly influences Y. Correlation can arise from causation, reverse causation, confounders, or coincidence. Standard statistics from observational data can't distinguish these without additional assumptions. *[Mention your pgmpy SortnRegress work — "causal discovery algorithms use assumptions like varsortability or interventions to recover causal structure from observational data."]*
-
-**Q: What does the Central Limit Theorem say and why does it matter?**
-Sums or means of many independent identically-distributed random variables converge to a Normal distribution, regardless of the original distribution's shape (as long as variance is finite). It's why Normal assumptions work for sample means, why confidence intervals are constructed the way they are, and why many natural phenomena look Gaussian — they're sums of many small effects.
-
-**Q: What's a p-value?**
-The probability of observing data at least as extreme as what you saw, assuming the null hypothesis is true. Small p-value means the data is unlikely under H₀, so you reject it. It is NOT the probability that H₀ is true.
-
-**Q: Type I vs Type II error?**
-Type I: reject a true null (false alarm). Type II: fail to reject a false null (miss). In fraud detection, Type I means flagging a legitimate transaction (annoying customers); Type II means missing actual fraud (financial loss). The business sets the tradeoff.
-
-**Q: What's MLE vs Bayesian estimation?**
-Maximum Likelihood Estimation picks the parameter θ that maximizes `P(data|θ)` — point estimate, no prior. Bayesian estimation treats θ as a random variable, computes posterior `P(θ|data) ∝ P(data|θ)·P(θ)` — full distribution, incorporates prior beliefs. MLE can overfit on small data; Bayesian (with reasonable prior) regularizes.
-
-## Your resume angle
-"Probability and Bayesian reasoning are central to my pgmpy contributions. The library is built on probabilistic graphical models, which represent joint distributions via conditional independencies encoded in a DAG. My work on SortnRegress and the dataset registry required understanding of how causal discovery algorithms use observational statistics to recover structure — which is fundamentally a probabilistic inference problem."
+Practice until natural. Aim 60–75 seconds. Key line: **"I replaced my own earlier registry"** — shows iteration and non-attachment.
 
 ---
 
-# 7. LINEAR ALGEBRA
+# Final checklist
 
-Fast pass. Focus on what actually appears in ML.
-
-## Concepts
-
-**Vector**: ordered list of numbers. Represents a point or direction in n-dimensional space.
-
-**Matrix**: 2D grid of numbers. Represents a linear transformation.
-
-**Dot product**: `a · b = Σ aᵢbᵢ = |a||b|cos(θ)`. Measures alignment. Zero iff orthogonal. The basis of cosine similarity used in embeddings.
-
-**Matrix multiplication**: `(m×n) × (n×p) = (m×p)`. Inner dimensions must match. **Not commutative** — generally `AB ≠ BA`. Think of each column of the result as A applied to a column of B.
-
-**Transpose** `Aᵀ`: flip rows and columns. `(AB)ᵀ = BᵀAᵀ`.
-
-**Identity matrix I**: diagonal of ones. `AI = IA = A`.
-
-**Inverse A⁻¹**: `AA⁻¹ = I`. Only exists if A is square and has non-zero determinant (full rank).
-
-**Determinant**: scalar summary of a square matrix. `det(A) = 0` means A is singular (not invertible) and collapses space along some direction. Geometrically, |det| is the volume scaling factor.
-
-**Rank**: number of linearly independent columns (equivalently rows). Full rank = all columns independent = invertible (if square).
-
-**Eigenvalues and eigenvectors**: for square A, an eigenvector v satisfies `Av = λv` for scalar λ. v is a direction that A merely scales (doesn't rotate). Eigenvalues tell you the scaling factor.
-
-- Used in **PCA**: the eigenvectors of the covariance matrix are the principal components; eigenvalues are the variance explained along each direction.
-- Used in **spectral methods**, **Markov chains** (stationary distribution), **PageRank**.
-
-**Norms**:
-- **L1 norm**: `Σ|xᵢ|` — sum of absolute values. Sparse solutions.
-- **L2 norm**: `√Σxᵢ²` — Euclidean length. Standard regularizer.
-
-**Orthogonality**: vectors a and b are orthogonal if `a · b = 0`. Orthogonal matrices (QᵀQ = I) preserve lengths and angles — used in decompositions.
-
-**Singular Value Decomposition (SVD)**: any matrix A = UΣVᵀ where U, V are orthogonal and Σ is diagonal with non-negative entries (singular values). Foundation of dimensionality reduction and recommender systems.
-
-## Code you should recognize
-
-```python
-import numpy as np
-
-A = np.array([[2, 1], [1, 3]])
-b = np.array([5, 8])
-
-# Matrix multiplication
-np.dot(A, A)         # or A @ A
-
-# Solve Ax = b
-x = np.linalg.solve(A, b)    # prefer this over A⁻¹b
-
-# Inverse (rarely needed directly)
-np.linalg.inv(A)
-
-# Eigenvalues/vectors
-eigvals, eigvecs = np.linalg.eig(A)
-
-# Determinant and rank
-np.linalg.det(A)
-np.linalg.matrix_rank(A)
-
-# Norms
-np.linalg.norm(b)            # L2 by default
-np.linalg.norm(b, ord=1)     # L1
-
-# SVD
-U, S, Vt = np.linalg.svd(A)
-```
-
-## Interview Q&A
-
-**Q: Why does linear regression use `β = (XᵀX)⁻¹Xᵀy`?**
-Derived by minimizing squared error `||y - Xβ||²`. Taking derivative with respect to β and setting to zero gives the normal equations `XᵀXβ = Xᵀy`. Solve for β. In practice we don't invert `XᵀX` explicitly — we use numerically stable methods like QR decomposition.
-
-**Q: What are eigenvectors intuitively?**
-Directions that a linear transformation doesn't rotate — only stretches or shrinks. The eigenvalue is the scaling factor. For a shear transformation, the shear direction is an eigenvector with eigenvalue 1.
-
-**Q: Where do eigenvectors appear in ML?**
-PCA: covariance matrix eigenvectors are the principal components, and eigenvalues tell you variance captured. Spectral clustering. Google's PageRank — the stationary distribution of the web graph is the dominant eigenvector of the transition matrix.
-
-**Q: L1 vs L2 regularization?**
-L1 (Lasso) adds `λΣ|βᵢ|` — encourages sparse solutions (many coefficients exactly zero) because the penalty is non-differentiable at zero, which acts like feature selection. L2 (Ridge) adds `λΣβᵢ²` — shrinks coefficients smoothly toward zero but rarely exactly zero. Elastic Net combines both.
+- [ ] I can explain what a Bayesian Network is in 2 sentences
+- [ ] I can draw chain/fork/collider and explain d-separation
+- [ ] I can explain why MLE can fail and why Dirichlet prior helps
+- [ ] I can name 4 example BNs that ship with pgmpy (alarm, asia, sachs, arth150)
+- [ ] I can tell the three-act PR story in under 90 seconds without saying "before my work"
+- [ ] I can name skbase's key components: BaseObject, all_objects, tags
+- [ ] I can explain why files were renamed from `_abalone.py` to `abalone.py`
+- [ ] I have the fkiraly review story ready for "tell me about disagreement"
+- [ ] I can explain the one piece of math (multivariate Gaussian from covariance)
+- [ ] I can walk through Bitcoin in 60 seconds (resume-scoped)
+- [ ] I know my code used **default RandomForestClassifier()** — no class_weight, no tuning
+- [ ] I know my split was **plain 80/20, NOT stratified**
+- [ ] I know my code used **8 features** (6 on resume + year + day)
+- [ ] I have the honest "addressed imbalance via per-class metrics" answer (not SMOTE or class_weight)
+- [ ] I will NOT volunteer the Flask app, live demo, or v2 roadmap — FYP is done
+- [ ] If asked "how would you improve it?", short generic answer: XGBoost, SMOTE, stratified sampling
+- [ ] I know my LoRA config exactly: **r=16, alpha=16, dropout=0, 7 target modules**
+- [ ] I know my trainable percentage: **0.78%** (~30M of 3.85B)
+- [ ] I know my dataset: **pdx97 Schema_Based_Instruction_Dataset, 324/36 split**
+- [ ] I know the two output inconsistencies: **loss collapse to 10⁻⁸ + empty generation**
+- [ ] I have 4 specific fixes ready: **lower LR, add dropout, early stopping, EOS in template**
 
 ---
 
-# 8. SUPERVISED LEARNING (bonus — quick reference)
+# Key phrases to drop naturally
 
-## Concepts
+Spread across the interview — don't cluster:
 
-**Definition**: learning a function f: X → Y from labeled (x, y) pairs. Classification (discrete y) or regression (continuous y).
-
-**The workflow**:
-1. Split data — train/validation/test (or k-fold cross-validation).
-2. Preprocess — scale numerical features, encode categorical, handle missing.
-3. Train model on train set.
-4. Tune hyperparameters on validation set (or via CV).
-5. Report final performance on held-out test set — **once only**.
-
-**Bias-variance tradeoff**:
-- **High bias** (underfitting): model too simple, misses signal. Low train and test accuracy.
-- **High variance** (overfitting): model memorizes train, fails to generalize. High train accuracy, low test accuracy.
-- Fix overfitting: more data, regularization, simpler model, early stopping, dropout (NNs), cross-validation.
-
-**Class imbalance** (you handled this in the Bitcoin project):
-- Accuracy is meaningless — a model that predicts "not ransomware" always gets 99% on imbalanced data.
-- Use precision, recall, F1, ROC-AUC instead.
-- Techniques: SMOTE (synthetic oversampling), class weights in the loss, stratified sampling.
-
-**Key algorithms** (one-line intuition each):
-
-| Algorithm | Intuition | Strength |
-|-----------|-----------|----------|
-| Linear regression | Fit a line minimizing squared error | Interpretable, fast |
-| Logistic regression | Linear → sigmoid → probability | Baseline classifier, calibrated |
-| Decision tree | Greedy splits minimizing impurity | Non-linear, interpretable |
-| Random Forest | Ensemble of trees (bagging) | Your Bitcoin project. Robust, low-tuning |
-| Gradient Boosting | Sequential trees correcting errors | Best tabular performance (XGBoost, LightGBM) |
-| SVM | Max-margin hyperplane | High-dim, kernel trick |
-| k-NN | Majority vote of k nearest | No training, simple baseline |
-| Neural Networks | Stacked non-linear transformations | Flexible, needs data |
-
-**Metrics**:
-- **Classification**: accuracy (balanced data only), precision = TP/(TP+FP), recall = TP/(TP+FN), F1 = harmonic mean, ROC-AUC, confusion matrix.
-- **Regression**: MSE, RMSE, MAE, R².
-- **When precision vs recall matters**: spam filter — precision (don't flag real mail). Medical screening — recall (don't miss sick patients). Business context decides.
-
-## Interview Q&A
-
-**Q: Walk me through your Bitcoin ransomware detection project.**
-Dataset: UCI BitcoinHeist, ~3M Bitcoin addresses labeled across 29 ransomware families plus benign. Features were transaction-graph derived — length, weight, count, looped, neighbors, income. Heavy class imbalance (vast majority benign), so I used stratified sampling and class weights, and evaluated with precision/recall/F1 per class, not accuracy. I chose Random Forest because it handles non-linear feature interactions, gives feature importance out of the box, is robust to class imbalance with weights, and requires less tuning than gradient boosting. I did train/test split with stratification, trained the classifier, and analyzed per-family prediction behavior — some families were harder than others, likely due to sample size differences.
-
-**Q: Why Random Forest over a single decision tree?**
-A single tree overfits — it can achieve 100% train accuracy by growing deep. RF trains many trees on bootstrapped samples with random feature subsets, then averages. The decorrelation between trees reduces variance dramatically without much increase in bias — classic bagging benefit.
-
-**Q: How do you handle class imbalance?**
-First, don't use accuracy as the metric — it's misleading. Use precision, recall, F1, or ROC-AUC. Algorithmically: class weights in the loss function, stratified sampling to preserve ratios, oversampling minority class (SMOTE), or undersampling majority. Choice depends on data size and business cost of each error type.
-
-**Q: What's cross-validation?**
-Split training data into k folds. For each fold, train on the other k-1 and validate on this one. Average the metrics. Gives a more robust estimate of generalization than a single train/val split, at k× compute cost. Essential when data is small.
-
-**Q: Precision vs recall — give a real example.**
-In my ransomware project, recall matters more — missing a ransomware address (false negative) is worse than flagging a benign one for review. So I'd optimize for high recall, accepting some precision loss. For a spam filter, it's opposite — flagging a real email as spam is worse than letting one spam through, so precision matters more.
-
-## Your resume angle
-Already covered above — lead with the Bitcoin project, tie class imbalance handling to the metric choice, explain the RF rationale clearly.
+- "Convention over configuration"
+- "Inheritance-based auto-discovery"
+- "Tag-based filtering"
+- "Module introspection"
+- "Reflection via `skbase.lookup.all_objects`"
+- "Unblocked downstream contributors"
+- "I didn't get attached to my first design"
+- "Infrastructure-level contribution"
+- "The math is implemented by other contributors; my work serves their algorithms"
+- "Scale invariant" (for the covariance-to-sample mixin)
 
 ---
 
-# MOCK RAPID-FIRE QUESTION BANK
-
-Go through these the night before. If you can't answer in 30 seconds, flag it for re-study.
-
-1. Why is NumPy faster than Python lists? → Contiguous memory, fixed dtype, C-level vectorized operations.
-2. What's broadcasting? → Automatic shape alignment for element-wise ops; dimensions compatible if equal or 1.
-3. `.loc` vs `.iloc`? → Label-based vs position-based indexing.
-4. How does `groupby` work? → Split rows by key, apply function within each group, combine results.
-5. Clustered vs non-clustered index? → Physical row order vs separate pointer structure.
-6. What's a key lookup in an execution plan? → Index had partial columns; query had to fetch rest from table. Fix with covering index.
-7. READ COMMITTED vs SNAPSHOT? → First uses locks; second uses row versioning (no read-write blocking).
-8. Stored procedure vs function? → SP has side effects, caches plan; function returns value, side-effect-free.
-9. Explain self-attention in one paragraph. → Tokens project into Q/K/V; attention weights are softmax(QKᵀ/√dk); output is weighted sum of V.
-10. Why scale by √d_k? → Keep dot-product variance stable; avoid softmax saturation.
-11. BERT vs GPT? → Bidirectional encoder vs causal decoder.
-12. Why LoRA? → Freeze base, train low-rank ΔW = BA, ~1% params, no catastrophic forgetting.
-13. What's 4-bit quantization? → Compress weights to 4 bits; ~4× memory saving with minimal quality loss.
-14. SFT vs RLHF? → Imitation learning on pairs vs reward-optimized with human preferences.
-15. Bayes' theorem? → `P(A|B) = P(B|A)·P(A)/P(B)`. Posterior proportional to likelihood times prior.
-16. Conditional independence? → `P(A,B|C) = P(A|C)·P(B|C)`. Core assumption in Bayesian networks.
-17. Correlation vs causation? → Association vs direct influence. Confounders can create correlation without causation.
-18. CLT? → Sum/mean of many i.i.d. RVs tends to Normal, regardless of original distribution.
-19. What's a p-value? → Probability of data this extreme assuming H₀; small → reject H₀.
-20. Type I vs Type II error? → Reject true null vs fail to reject false null.
-21. What's an eigenvalue? → Scaling factor for a direction (eigenvector) that the matrix doesn't rotate.
-22. L1 vs L2 regularization? → Sparse (feature selection) vs smooth shrinkage.
-23. Overfitting — symptoms and fixes? → High train accuracy, low test; fix with regularization, more data, simpler model, CV.
-24. Random Forest vs single tree? → Ensemble reduces variance via bagging and feature randomness.
-25. Precision vs recall? → TP/(TP+FP) vs TP/(TP+FN). Trade off based on cost of false positives vs false negatives.
-26. Why not use accuracy on imbalanced data? → A trivial majority-class predictor can score high without learning anything.
-27. k-fold cross-validation? → Partition data into k folds, train on k-1, validate on 1, rotate, average.
-28. What's a deadlock, how do you resolve? → Two txns each holding a lock the other needs. SQL Server kills cheaper one. Prevent with consistent lock ordering.
-29. What's ACID? → Atomicity, Consistency, Isolation, Durability.
-30. Why normalize a database? → Integrity, reduce redundancy. Denormalize for read performance.
-
----
-
-# FINAL RULES FOR MONDAY
-
-1. **Never bluff.** If you don't know, say so cleanly, then reason from first principles.
-2. **Brute force first, then optimize.** For DSA.
-3. **Talk while you code.** Silent coding reads as uncertainty.
-4. **Route every project question back to your resume.** pgmpy and LoRA are your differentiators.
-5. **Ask clarifying questions.** For coding problems especially — constraints, edge cases, input format.
-6. **Own your weaknesses gracefully.** "I haven't used X, but based on Y principles I'd expect it to work like Z."
-7. **Smile and slow down.** Rushed answers sound uncertain. Take a breath before answering.
-
-You got this. The resume is already strong. Now just don't freeze, don't bluff, and route hard questions back to what you've actually built.
+You are in a stronger position than most 36-hour preps allow. The code proves the story. Own it.
