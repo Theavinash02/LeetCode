@@ -2,8 +2,8 @@ class Solution:
     def twoSum(self, nums: List[int], target: int) -> List[int]:
         num = {}
         for i, n in enumerate(nums):
-            fake = target-n
+            fake = target - n
             if fake in num:
-                return [i,num[fake]]
-            
+                return [i, num[fake]]
+
             num[n] = i
