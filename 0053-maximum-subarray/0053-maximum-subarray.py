@@ -1,12 +1,9 @@
+import numpy as np
 class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
         cur = 0
         ma = float(-inf)
-        for i in nums:
-            cur = max(cur+i,i)
-            ma = max(cur,ma)
-
+        for i in range(0,len(nums)):
+            cur = max(cur+nums[i],nums[i])
+            ma= max(ma,cur)
         return ma
-
-            
-            
