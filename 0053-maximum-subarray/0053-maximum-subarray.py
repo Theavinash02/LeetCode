@@ -1,4 +1,3 @@
-import numpy as np
 class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
         cur = 0
