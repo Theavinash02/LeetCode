@@ -5,6 +5,6 @@ class Solution:
             if n in contains:
                 return True
             else:
-                contains[i] = n
+                contains[n] = i
         return False
         
