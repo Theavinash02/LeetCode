@@ -18,6 +18,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | ------- |
 | [0053-maximum-subarray](https://github.com/Theavinash02/LeetCode/tree/master/0053-maximum-subarray) |
 | [0121-best-time-to-buy-and-sell-stock](https://github.com/Theavinash02/LeetCode/tree/master/0121-best-time-to-buy-and-sell-stock) |
+| [1653-minimum-deletions-to-make-string-balanced](https://github.com/Theavinash02/LeetCode/tree/master/1653-minimum-deletions-to-make-string-balanced) |
 | [3620-network-recovery-pathways](https://github.com/Theavinash02/LeetCode/tree/master/3620-network-recovery-pathways) |
 ## Divide and Conquer
 |  |
@@ -55,6 +56,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | ------- |
 | [0049-group-anagrams](https://github.com/Theavinash02/LeetCode/tree/master/0049-group-anagrams) |
 | [0242-valid-anagram](https://github.com/Theavinash02/LeetCode/tree/master/0242-valid-anagram) |
+| [1653-minimum-deletions-to-make-string-balanced](https://github.com/Theavinash02/LeetCode/tree/master/1653-minimum-deletions-to-make-string-balanced) |
 ## Breadth-First Search
 |  |
 | ------- |
@@ -96,4 +98,8 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 |  |
 | ------- |
 | [2492-minimum-score-of-a-path-between-two-cities](https://github.com/Theavinash02/LeetCode/tree/master/2492-minimum-score-of-a-path-between-two-cities) |
+## Stack
+|  |
+| ------- |
+| [1653-minimum-deletions-to-make-string-balanced](https://github.com/Theavinash02/LeetCode/tree/master/1653-minimum-deletions-to-make-string-balanced) |
 <!---LeetCode Topics End-->
