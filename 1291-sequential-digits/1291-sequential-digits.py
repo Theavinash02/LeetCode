@@ -1,3 +1,4 @@
+# Breath first search method
 from collections import deque
 class Solution:
     def sequentialDigits(self, low: int, high: int) -> List[int]:
