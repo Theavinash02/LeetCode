@@ -76,6 +76,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | [0049-group-anagrams](https://github.com/Theavinash02/LeetCode/tree/master/0049-group-anagrams) |
 | [0242-valid-anagram](https://github.com/Theavinash02/LeetCode/tree/master/0242-valid-anagram) |
 | [0316-remove-duplicate-letters](https://github.com/Theavinash02/LeetCode/tree/main/0316-remove-duplicate-letters/) | Medium |
+| [1081-smallest-subsequence-of-distinct-characters](https://github.com/Theavinash02/LeetCode/tree/main/1081-smallest-subsequence-of-distinct-characters/) | Medium |
 | [1653-minimum-deletions-to-make-string-balanced](https://github.com/Theavinash02/LeetCode/tree/master/1653-minimum-deletions-to-make-string-balanced) |
 | [3756-concatenate-non-zero-digits-and-multiply-by-sum-ii](https://github.com/Theavinash02/LeetCode/tree/main/3756-concatenate-non-zero-digits-and-multiply-by-sum-ii/) | Medium |
 ## Breadth-First Search
@@ -130,6 +131,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | Problem Name | Difficulty |
 | ------- | ------- |
 | [0316-remove-duplicate-letters](https://github.com/Theavinash02/LeetCode/tree/main/0316-remove-duplicate-letters/) | Medium |
+| [1081-smallest-subsequence-of-distinct-characters](https://github.com/Theavinash02/LeetCode/tree/main/1081-smallest-subsequence-of-distinct-characters/) | Medium |
 | [1653-minimum-deletions-to-make-string-balanced](https://github.com/Theavinash02/LeetCode/tree/master/1653-minimum-deletions-to-make-string-balanced) |
 ## Math
 | Problem Name | Difficulty |
@@ -149,6 +151,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | Problem Name | Difficulty |
 | ------- | ------- |
 | [0316-remove-duplicate-letters](https://github.com/Theavinash02/LeetCode/tree/main/0316-remove-duplicate-letters/) | Medium |
+| [1081-smallest-subsequence-of-distinct-characters](https://github.com/Theavinash02/LeetCode/tree/main/1081-smallest-subsequence-of-distinct-characters/) | Medium |
 | [3534-path-existence-queries-in-a-graph-ii](https://github.com/Theavinash02/LeetCode/tree/main/3534-path-existence-queries-in-a-graph-ii/) | Hard |
 ## Bit Manipulation
 | Problem Name | Difficulty |
@@ -181,4 +184,5 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | Problem Name | Difficulty |
 | ------- | ------- |
 | [0316-remove-duplicate-letters](https://github.com/Theavinash02/LeetCode/tree/main/0316-remove-duplicate-letters/) | Medium |
+| [1081-smallest-subsequence-of-distinct-characters](https://github.com/Theavinash02/LeetCode/tree/main/1081-smallest-subsequence-of-distinct-characters/) | Medium |
 <!---LeetCode Topics End-->
