@@ -9,6 +9,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | [0121-best-time-to-buy-and-sell-stock](https://github.com/Theavinash02/LeetCode/tree/master/0121-best-time-to-buy-and-sell-stock) |
 | [0209-minimum-size-subarray-sum](https://github.com/Theavinash02/LeetCode/tree/master/0209-minimum-size-subarray-sum) |
 | [0217-contains-duplicate](https://github.com/Theavinash02/LeetCode/tree/master/0217-contains-duplicate) |
+| [1260-shift-2d-grid](https://github.com/Theavinash02/LeetCode/tree/main/1260-shift-2d-grid/) | Easy |
 | [1288-remove-covered-intervals](https://github.com/Theavinash02/LeetCode/tree/master/1288-remove-covered-intervals) |
 | [1331-rank-transform-of-an-array](https://github.com/Theavinash02/LeetCode/tree/main/1331-rank-transform-of-an-array/) | Easy |
 | [2812-find-the-safest-path-in-a-grid](https://github.com/Theavinash02/LeetCode/tree/master/2812-find-the-safest-path-in-a-grid) |
@@ -104,6 +105,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 ## Matrix
 | Problem Name | Difficulty |
 | ------- | ------- |
+| [1260-shift-2d-grid](https://github.com/Theavinash02/LeetCode/tree/main/1260-shift-2d-grid/) | Easy |
 | [2812-find-the-safest-path-in-a-grid](https://github.com/Theavinash02/LeetCode/tree/master/2812-find-the-safest-path-in-a-grid) |
 | [3286-find-a-safe-walk-through-a-grid](https://github.com/Theavinash02/LeetCode/tree/main/3286-find-a-safe-walk-through-a-grid/) | Medium |
 ## Shortest Path
@@ -171,6 +173,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 ## Simulation
 | Problem Name | Difficulty |
 | ------- | ------- |
+| [1260-shift-2d-grid](https://github.com/Theavinash02/LeetCode/tree/main/1260-shift-2d-grid/) | Easy |
 | [3867-sum-of-gcd-of-formed-pairs](https://github.com/Theavinash02/LeetCode/tree/main/3867-sum-of-gcd-of-formed-pairs/) | Medium |
 ## Combinatorics
 | Problem Name | Difficulty |
