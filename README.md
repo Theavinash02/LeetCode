@@ -82,6 +82,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | [0316-remove-duplicate-letters](https://github.com/Theavinash02/LeetCode/tree/main/0316-remove-duplicate-letters/) | Medium |
 | [1081-smallest-subsequence-of-distinct-characters](https://github.com/Theavinash02/LeetCode/tree/main/1081-smallest-subsequence-of-distinct-characters/) | Medium |
 | [1653-minimum-deletions-to-make-string-balanced](https://github.com/Theavinash02/LeetCode/tree/master/1653-minimum-deletions-to-make-string-balanced) |
+| [3499-maximize-active-section-with-trade-i](https://github.com/Theavinash02/LeetCode/tree/main/3499-maximize-active-section-with-trade-i/) | Medium |
 | [3756-concatenate-non-zero-digits-and-multiply-by-sum-ii](https://github.com/Theavinash02/LeetCode/tree/main/3756-concatenate-non-zero-digits-and-multiply-by-sum-ii/) | Medium |
 ## Breadth-First Search
 | Problem Name | Difficulty |
@@ -168,6 +169,7 @@ A collection of LeetCode questions to ace the coding interview! - Created using 
 | Problem Name | Difficulty |
 | ------- | ------- |
 | [1291-sequential-digits](https://github.com/Theavinash02/LeetCode/tree/main/1291-sequential-digits/) | Medium |
+| [3499-maximize-active-section-with-trade-i](https://github.com/Theavinash02/LeetCode/tree/main/3499-maximize-active-section-with-trade-i/) | Medium |
 ## Number Theory
 | Problem Name | Difficulty |
 | ------- | ------- |
