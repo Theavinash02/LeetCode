@@ -17,11 +17,7 @@ class Solution:
         return ma1
         '''
         num = sorted(nums)
-        for i in range(len(num)-2):
-            ml1 = num[i]*num[i+1]*num[-1]
-            ml2 = num[i]*num[i+1]*num[i+2]
-            ma1=max(ma1,ml1,ml2)
-        return ma1
+        return max(num[0]*num[1]*num[-1],num[-1]*num[-2]*num[-3])
                                 
 
 
