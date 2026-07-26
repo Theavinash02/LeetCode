@@ -16,10 +16,10 @@ class Solution:
                 k=j+1
         return ma1
         '''
-        num = nums.sort()
-        for i in range(len(nums)-2):
-            ml1 = nums[i]*nums[i+1]*nums[-1]
-            ml2 = nums[i]*nums[i+1]*nums[i+2]
+        num = sorted(nums)
+        for i in range(len(num)-2):
+            ml1 = num[i]*num[i+1]*num[-1]
+            ml2 = num[i]*num[i+1]*num[i+2]
             ma1=max(ma1,ml1,ml2)
         return ma1
                                 
